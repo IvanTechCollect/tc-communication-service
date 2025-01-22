@@ -1,6 +1,7 @@
 
 const Credential = require('../models/Credential');
 const { JSDOM } = require('jsdom');
+const htmlPdf = require('html-pdf-node');
 
 const getCredentials = async (companyId) => {
 
@@ -33,24 +34,22 @@ const puppeteer = require('puppeteer');
 const fs = require('fs').promises;
 
 async function createPDF(htmlContent, outputPath) {
-    // Launch a headless browser
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
+    const options = { format: 'Letter' }; // Specify PDF options
+    const file = { content: htmlContent };
 
-    // Set the HTML content
-    await page.setContent(htmlContent);
+    try {
+        // Generate PDF and wait for it to complete
+        const pdfBuffer = await htmlPdf.generatePdf(file, options);
 
-    // Generate the PDF
-    await page.pdf({
-        path: outputPath, // Output file path
-        format: 'A4', // Page size
-        printBackground: true, // Print background styles
-    });
+        // Save the PDF to the output file path
+        await fs.writeFile(outputPath, pdfBuffer);
 
-    // Close the browser
-    await browser.close();
+        return true;
 
-    return true;
+    } catch (error) {
+        console.error('Error creating PDF:', error);
+        return false;
+    }
 }
 
 async function convertPDFToBase64(filePath) {

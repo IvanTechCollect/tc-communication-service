@@ -135,7 +135,7 @@ const sendCommunicationAttachemnt = async (req, res) => {
 
         if (fileToBeSent) {
             let outputPath = 'output.pdf'
-            let fileCreated = await createPDF(fileData, outputPath)
+            const fileCreated = await createPDF(fileData, outputPath)
             if (fileCreated) {
                 base64Data = await convertPDFToBase64(outputPath);
             }

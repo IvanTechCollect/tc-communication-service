@@ -154,7 +154,7 @@ const sendCommunicationAttachemnt = async (req, res) => {
             "Description": `TechCollect ${communication} on day ${foundTimelineStep.days} `,
             "CorrespondenceType": "Collections",
             "NoteType": "Note",
-            "Note": textData.length > 0 || `${communication} sent on ${new Date(foundTimelineStep.activity_sent_date).toISOString().split('T')[0]}`,
+            "Note": textData.length > 0 ? textData : `${communication} sent on ${new Date(foundTimelineStep.activity_sent_date).toISOString().split('T')[0]}`,
             "CorrespondenceStatus": "Approved",
         }
 

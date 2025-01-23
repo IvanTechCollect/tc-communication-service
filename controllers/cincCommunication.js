@@ -52,6 +52,11 @@ const sendCommunicationAttachemnt = async (req, res) => {
 
         }
 
+        if (foundUnit.company_id !== 396) {
+            return res.status(404).send('We only support test companies for now!');
+
+        }
+
         const foundCompany = await Company.query().where('id', foundUnit.company_id).first();
 
         if (!foundCompany) {

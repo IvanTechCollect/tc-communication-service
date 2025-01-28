@@ -23,53 +23,35 @@ connectToMongoDb();
 
 
 app.get('/', async (req, res) => {
-    res.send('Hello World');
+    res.send('Hello World. Starting the process');
+
+    setTimeout(() => {
+
+        console.log('Process Finished');
+
+    }, 5000)
 })
 
-app.post('/webhook', (req, res) => {
 
-    console.log(req.body);
-    res.send('WEBHOOK');
-})
+app.post('/oauth/token', async (req, res) => {
 
-
-app.get('/sendgrid', async (req, res) => {
-    sgClient.setApiKey(process.env.SENDGRID_API_KEY);
-    console.log(process.env.SENDGRID_API_KEY);
     try {
-        const response = await sgClient.request({
-            method: 'GET',
-            url: '/v3/messages',
-            qs: {
-                query: `last_event_time BETWEEN TIMESTAMP '2025-01-14T00:00:00' AND TIMESTAMP '2025-01-21T23:59:59'`,
-                limit: 10, // Number of records to retrieve
-            },
-        });
+        console.log(req.body);
 
-        const data = response[1].messages; // The activity data
-        console.log('Activity Feed:', data);
-
-        let result = [];
-
-        data.forEach(message => {
-            result.push({
-                Status: message.status,
-                To: message.to_email,
-                Subject: message.subject,
-                LastEventTime: message.last_event_time,
-                Opens: message.opens_count || 0,
-                Clicks: message.clicks_count || 0,
-            });
-        });
-
-        return res.json(result);
-
+        return res.send(null);
     } catch (error) {
-        res.sendStatus(500);
-        console.error('Error fetching activity feed:', error.response ? error.response.body : error.message);
+
+        console.log(error);
     }
 
+
+
 })
+
+
+
+app.use('/webhooks', require('./routes/webhook'));
+
 
 app.use('/private', apiKeyMiddleware, require('./routes/private'))
 

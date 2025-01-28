@@ -3,7 +3,7 @@ require('dotenv').config();
 
 // Default Redis configuration
 const redisConfig = {
-    host: 'redis://red-cuckf19u0jms73caiptg:6379',
+    host: 'redis://red-cuckf19u0jms73caiptg',
     port: 6379,
 };
 const withTimeout = (func, duration) => async (data) => {

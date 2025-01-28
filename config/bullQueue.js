@@ -3,9 +3,8 @@ require('dotenv').config();
 
 // Default Redis configuration
 const redisConfig = {
-    host: process.env.REDIS_HOST || 'redis-11145.c16.us-east-1-2.ec2.redns.redis-cloud.com',
-    port: process.env.REDIS_PORT || 11145,
-    password: process.env.REDIS_PWD,
+    host: 'redis://red-cuckf19u0jms73caiptg:6379',
+    port: 6379,
 };
 const withTimeout = (func, duration) => async (data) => {
     const timeout = new Promise((_, reject) =>

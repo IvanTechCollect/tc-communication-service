@@ -20,7 +20,9 @@ const createQueue = (queueName, jobFunction, options = {}) => {
     if (!queueName) throw new Error('Queue name is required');
     if (typeof jobFunction !== 'function') throw new Error('jobFunction must be a valid function');
 
-    const jobQueue = new Queue(queueName, { redis: redisConfig });
+    const jobQueue = new Queue(queueName, {
+        redis: redisConfig
+    });
 
     jobQueue.process(options.concurrency || 1, async (job) => {
         try {

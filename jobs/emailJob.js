@@ -64,7 +64,7 @@ const emailJobFunction = async (jobData) => {
 
 // Create the queue
 const emailQueue = createQueue('sendEmailQueue', emailJobFunction, {
-    concurrency: 5,  // Number of parallel workers
+    concurrency: 1,  // Number of parallel workers
     duration: 5000  // Timeout duration for each job (in ms)
 });
 

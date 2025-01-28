@@ -18,4 +18,4 @@ const startRedis = async () => {
     console.log("found value: ", value)
 };
 
-module.exports = { startRedis }
+module.exports = startRedis 

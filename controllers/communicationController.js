@@ -46,7 +46,7 @@ const sendCommunicationEmail = async (req, res) => {
         const { htmlContent, formattedSubject } = await applyDataToTemplate(unitId, html, subject);
 
         if (!htmlContent) {
-            return res.status(400).json({ error: 'Failed to send email.' });
+            return res.status(400).json({ error: 'Failed to send email. No htmlContent' });
 
         }
 
@@ -57,7 +57,7 @@ const sendCommunicationEmail = async (req, res) => {
 
         if (!emailResult) {
 
-            return res.status(400).json({ error: 'Failed to send email.' });
+            return res.status(400).json({ error: 'Failed to send email. No Email Result ' });
         }
 
         return res.status(200).json({ success: true, message: 'Email sent successfully.', emailId: emailId });

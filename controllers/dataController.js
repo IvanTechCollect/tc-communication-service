@@ -22,7 +22,7 @@ const extractData = async (unitId) => {
         let remittanceState = '';
         let remittanceZip = '';
 
-        if (foundUnit.company_id !== 287) {
+        if (foundUnit.company_id !== 287 && companyRemittance && remittance) {
             remittanceName = remittance?.remittance_name || companyRemittance?.remittance_name || '';
             remittanceAddress = remittance?.remittance_address || companyRemittance?.remittance_address || '';
             remittanceCity = remittance?.remittance_city || companyRemittance?.remittance_city || '';

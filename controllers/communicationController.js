@@ -54,6 +54,7 @@ const sendCommunicationEmail = async (req, res) => {
 
 
         await createLog('Email Sent', `{"uuid":"${metadata.emailId}"}`, true, 'communication');
+        await ProactiveRoadmap.query().update({ subject: formattedSubject, sent_text_data: htmlContent, activity_sent_date: new Date(), status: 2 }).where('id', proactiveId);
 
         if (!emailResult) {
 

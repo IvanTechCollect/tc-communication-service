@@ -8,10 +8,7 @@ const handleEmailWebhook = async (req, res) => {
 
     const { emailId, proactiveId, unitId, event, response, timestamp, reason } = req.body[0];
 
-    if (unitId !== 1432) {
 
-        return res.sendStatus(200);
-    }
 
     const foundCommunicationResponse = await CommunicationHandling.query().where('communication_webhook_id', emailId).first();
 

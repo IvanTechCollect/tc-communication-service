@@ -1,4 +1,4 @@
-import { createClient } from 'redis';
+const { createClient } = require('redis');
 
 const startRedis = async () => {
     // Connect to your internal Redis instance using the REDIS_URL environment variable

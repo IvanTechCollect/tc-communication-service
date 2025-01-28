@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true })); // For URL-encoded bodies
 
 connectDb();
 connectToMongoDb();
-
+startRedis();
 
 app.get('/', async (req, res) => {
     res.send('Hello World. Starting the process');

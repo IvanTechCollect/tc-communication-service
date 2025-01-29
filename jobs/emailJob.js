@@ -1,17 +1,16 @@
-
-// EMAIL JOB
-const createQueue = require("../config/bullQueue");
 const CommunicationHandling = require("../models/CommunicationHandling");
 const ProactiveRoadmap = require("../models/ProactiveRoadmap");
 const { applyDataToTemplate } = require("../controllers/dataController");
 const { sendEmail } = require("../controllers/emailController");
 const { createLog } = require("../controllers/logController");
 const { v4: uuidv4 } = require('uuid');
-
+const Queue = require('bull');
+const redisUrL = require('../config/redisConfig');
 // Email job function for the queue
-const emailJobFunction = async (jobData) => {
+
+const emailJobFunction = async (job) => {
     try {
-        const { to, html, subject, unitId, proactiveId } = jobData;
+        const { to, html, subject, unitId, proactiveId } = job.data;  // Access job data correctly
 
         if (!to || !html || !subject || !unitId) {
             if (!to) {
@@ -62,13 +61,22 @@ const emailJobFunction = async (jobData) => {
     }
 };
 
-// Create the queue
-const emailQueue = createQueue('sendEmailQueue', emailJobFunction, {
-    concurrency: 1,  // Number of parallel workers
-    duration: 5000  // Timeout duration for each job (in ms)
+// Create the queue and define job processing
+const emailQueue = new Queue('sendEmailQueue', redisUrL);
+
+emailQueue.process(async (job) => {
+    await emailJobFunction(job);  // Pass the job to the emailJobFunction
 });
 
-// The API endpoint to add the email job to the queue
+// Add email job to the queue with retry and backoff logic
+const addEmailToQueue = async (emailData) => {
+    await emailQueue.add(emailData, {
+        attempts: 3,
+        backoff: {
+            type: 'exponential',
+            delay: 1000  // Retry every 1 second, increasing exponentially
+        }
+    });
+};
 
-
-module.exports = { emailJobFunction, emailQueue };
+module.exports = { addEmailToQueue };

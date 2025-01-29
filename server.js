@@ -6,12 +6,11 @@ const PORT = process.env.PORT || 7500;
 
 const connectDb = require('./config/db.Conn');
 const startRedis = require('./config/redis');
-const createQueue = require('./config/bullQueue');
 const { readLog } = require('./controllers/communicationController');
-const sgClient = require('@sendgrid/client');
 
 const connectToMongoDb = require('./config/mongoDbConn');
 const apiKeyMiddleware = require('./middleware/checkAuth');
+const { testQueue } = require('./jobs/testJob');
 
 
 //connectDb();
@@ -22,15 +21,14 @@ connectDb();
 connectToMongoDb();
 startRedis();
 
+// Endpoint to add a job to the queue
 app.get('/', async (req, res) => {
-    res.send('Hello World. Starting the process');
 
-    setTimeout(() => {
+    res.send('Hello World');
 
-        console.log('Process Finished');
+});
 
-    }, 5000)
-})
+// Process the jobs in the queue
 
 
 app.post('/oauth/token', async (req, res) => {

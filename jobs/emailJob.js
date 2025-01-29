@@ -36,7 +36,9 @@ const emailJobFunction = async (job) => {
         const metadata = {
             emailId: emailId,
             unitId: unitId,
-            proactiveId: proactiveId
+            proactiveId: proactiveId,
+            env: 'LOCAL',
+            emailType: 'Follow Up'
         };
 
         const { htmlContent, formattedSubject } = await applyDataToTemplate(unitId, html, subject);

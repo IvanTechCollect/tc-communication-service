@@ -6,8 +6,14 @@ const handleEmailWebhook = async (req, res) => {
 
 
 
-    const { emailId, proactiveId, unitId, event, response, timestamp, reason } = req.body[0];
+    const { emailId, proactiveId, unitId, event, response, timestamp, reason, env, emailType } = req.body[0];
 
+
+    if (!emailType || emailType !== 'Follow Up' || !env || env === 'LOCAL') {
+
+        return;
+
+    }
 
 
     const foundCommunicationResponse = await CommunicationHandling.query().where('communication_webhook_id', emailId).first();

@@ -3,6 +3,7 @@ const { addCallToQueue } = require('../jobs/callJob');
 const { emailQueue, addEmailToQueue } = require('../jobs/emailJob');
 const { addLetterToQueue } = require('../jobs/letterJob');
 const { addSmsToQueue } = require('../jobs/smsJob');
+const ProactiveRoadmap = require('../models/ProactiveRoadmap');
 require('dotenv').config();
 
 
@@ -23,8 +24,13 @@ const sendCommunicationEmail = async (req, res) => {
         // Add the email job to the queue
         const jobData = { unitId, proactiveId };
 
-        await addEmailToQueue(jobData);
+        const result = await addEmailToQueue(jobData);
 
+        if (result == false) {
+
+            await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
+
+        }
     } catch (error) {
         console.error('Error queuing email job:', error);
         return res.status(500).json({ error: 'Internal server error.' });

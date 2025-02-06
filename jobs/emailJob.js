@@ -70,7 +70,10 @@ const emailJobFunction = async (job) => {
         let htmlContent = content;
 
         if (!htmlContent) {
-            throw new Error('Failed to send email. No htmlContent');
+
+            console.log('Failed to send email. No htmlContent');
+            return false;
+
         }
 
         if (preferredLanguage !== 'en') {
@@ -103,13 +106,12 @@ const emailJobFunction = async (job) => {
         await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: 2 }).where('id', proactiveId);
 
         if (!emailResult) {
-            throw new Error('Failed to send email. No Email Result');
+            return false
         }
-
         console.log('Email sent successfully', emailId);
+        return true;
     } catch (error) {
-        console.error('Error processing email job:', error);
-        throw error;  // Throw error so Bull can handle retries or logging
+        return false;
     }
 };
 
@@ -117,18 +119,23 @@ const emailJobFunction = async (job) => {
 const emailQueue = new Queue('sendEmailQueue', redisUrL);
 
 emailQueue.process(async (job) => {
-    await emailJobFunction(job);  // Pass the job to the emailJobFunction
+    const result = await emailJobFunction(job);
+    return result;// Pass the job to the emailJobFunction
 });
 
 // Add email job to the queue with retry and backoff logic
 const addEmailToQueue = async (emailData) => {
-    await emailQueue.add(emailData, {
+    const job = await emailQueue.add(emailData, {
         attempts: 3,
         backoff: {
             type: 'exponential',
             delay: 1000  // Retry every 1 second, increasing exponentially
         }
     });
+
+    const result = await job.finished();
+
+    return result;
 };
 
 

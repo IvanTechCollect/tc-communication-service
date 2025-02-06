@@ -37,10 +37,10 @@ const uploadBlob = async (fileContent, fileName) => {
 
         console.log(`Upload block blob ${blobName} successfully`);
 
-        return true;
+        return { result: true, url: blockBlobClient.url };
     } catch (error) {
         console.log(containerName, connectionString);
-        return false;
+        return { result: false }
     }
 
 

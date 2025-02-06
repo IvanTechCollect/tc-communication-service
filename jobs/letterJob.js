@@ -1,4 +1,5 @@
 // letterJob.js
+require('dotenv').config();
 
 const Queue = require("bull");
 const {
@@ -23,6 +24,8 @@ const {
 const {
     generateLedgerHtml,
 } = require("../controllers/ledgerTemplateController");
+
+const env = process.env.DB_ENV;
 
 const letterJobFunction = async (job) => {
     try {
@@ -122,22 +125,28 @@ const letterJobFunction = async (job) => {
         if (!saveResult) {
             return false;
         }
-        const osgResultArr = await sendLetterToOsg(certified, '12345678', '');
-        if (osgResultArr[0] == false) {
+        let osgResultArr = [];
 
-            return false
+        if (env === 'PROD') {
+            osgResultArr = await sendLetterToOsg(certified, '12345678', '');
+            if (osgResultArr[0] == false) {
+
+                return false
+            }
         }
 
-        const blobResult = await uploadBlob(content, fileName);
-        if (blobResult == false) {
+
+
+        const blobResponse = await uploadBlob(content, fileName);
+        if (blobResult.result == false) {
             return false;
         }
 
         const updateResult = await ProactiveRoadmap.query().update({
-            letter_portal_number: osgResultArr[1].portal_number,
+            letter_portal_number: env === 'PROD' ? osgResultArr[1].portal_number : 'Not sending to Osg in Staging',
             status: 1,
             activity_sent_date: new Date(),
-            sent_text_data_letter: content
+            sent_text_data_letter: blobResponse.url
         }).where('id', proactiveId);
 
         return true;

@@ -12,6 +12,7 @@ const Company = require("../models/Company");
 const { prepareHTMLForTranslation, restoreBlobURLs, restoreBase64Images } = require("../helpers/helpers");
 const { generateLedgerHtml } = require("../controllers/ledgerTemplateController");
 // Email job function for the queue
+require('dotenv').config();
 
 const emailJobFunction = async (job) => {
     try {
@@ -61,7 +62,7 @@ const emailJobFunction = async (job) => {
             emailId: emailId,
             unitId: unitId,
             proactiveId: proactiveId,
-            env: 'PROD',
+            env: process.env.DB_ENV,
             emailType: 'Follow Up'
         };
 

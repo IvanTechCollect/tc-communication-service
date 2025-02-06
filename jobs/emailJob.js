@@ -107,11 +107,13 @@ const emailJobFunction = async (job) => {
         await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: 2 }).where('id', proactiveId);
 
         if (!emailResult) {
+
             return false
         }
         console.log('Email sent successfully', emailId);
         return true;
     } catch (error) {
+        console.log(error);
         return false;
     }
 };

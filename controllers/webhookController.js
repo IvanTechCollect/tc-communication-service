@@ -104,7 +104,7 @@ const handleCallWebhook = async (req, res) => {
 
     if (CallStatus == 'completed') {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1 });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, activity_sent_date: new Date() });
 
         await VoiceCallback.query().insert({
             voiceId: req.body.CallSid,

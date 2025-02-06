@@ -59,7 +59,7 @@ const sendCommunicationCall = async (req, res) => {
 
     const data = req.body;
 
-    const result = addCallToQueue(data);
+    const result = await addCallToQueue(data);
 
     console.log('Queue Result: ', result);
 

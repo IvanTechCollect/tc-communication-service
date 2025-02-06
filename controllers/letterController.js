@@ -102,8 +102,18 @@ const sendLetterToOsg = async (certified = 0, processorId, pathtofile) => {
 
     try {
         const form = new FormData();
+
+        let product = 'GM';
+
+        if (certified && certified == 1) {
+            product = 'CRT';
+        }
+        form.append('product', product);
+
         form.append('file', fs.createReadStream(path.join(__dirname, '..', 'tempLetter.zip')), 'tempLetter.zip');
-        form.append('product', certified === 1 ? 'CRT' : 'GM');
+
+
+
         form.append('processor_id', processorId);
 
         const username = process.env.OSG_USERNAME;

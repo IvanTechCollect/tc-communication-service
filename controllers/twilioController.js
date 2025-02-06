@@ -140,7 +140,7 @@ const makeCall = async (data) => {
 
         await ProactiveRoadmap.query().where('id', proactiveId).update({ sent_text_data: content.replaceAll('|PAUSE|', ''), voiceId: call.sid });
 
-        return call;
+        return true;
     } catch (error) {
 
         console.log(error);;

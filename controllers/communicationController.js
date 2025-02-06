@@ -25,6 +25,7 @@ const sendCommunicationEmail = async (req, res) => {
         const jobData = { unitId, proactiveId };
 
         const result = await addEmailToQueue(jobData);
+        console.log('Queue Result: ', result);
 
         if (result == false) {
 

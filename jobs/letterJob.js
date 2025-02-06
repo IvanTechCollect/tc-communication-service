@@ -138,7 +138,7 @@ const letterJobFunction = async (job) => {
 
 
         const blobResponse = await uploadBlob(content, fileName);
-        if (blobResult.result == false) {
+        if (blobResponse.result == false) {
             return false;
         }
 

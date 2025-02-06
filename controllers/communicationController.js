@@ -29,7 +29,7 @@ const sendCommunicationEmail = async (req, res) => {
 
         if (result == false) {
 
-            await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
+            await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, activity_sent_date: new Date() });
 
         }
     } catch (error) {

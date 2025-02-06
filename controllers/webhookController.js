@@ -1,5 +1,6 @@
 const CommunicationHandling = require('../models/CommunicationHandling');
 const ProactiveRoadmap = require('../models/ProactiveRoadmap');
+const VoiceCallback = require('../models/VoiceCallback');
 const { sendEmail } = require('./emailController');
 const { forwardCallToClient } = require('./twilioController');
 
@@ -99,10 +100,22 @@ const handleCallWebhook = async (req, res) => {
     res.sendStatus(200);
 
     const { CallStatus, AnsweredBy, Digits } = req.body;
+    const { proactiveId } = req.query;
 
     if (CallStatus == 'completed') {
-        console.log(AnsweredBy, req.query);
 
+        await ProactiveRoadmap.query().where('proactive_id', proactiveId).update({ status: 1 });
+
+        await VoiceCallback.query().insert({
+            voiceId: req.body.CallSid,
+            mobile: req.body.Called,
+            status: CallStatus,
+            type: 'call',
+            answered_by: AnsweredBy,
+            CallDuration: req.body.CallDuration,
+            created_at: new Date(),
+            response: JSON.stringify(req.body)
+        })
     }
 
 }

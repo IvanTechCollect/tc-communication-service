@@ -137,6 +137,9 @@ const makeCall = async (data) => {
             });
 
 
+
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ sent_text_data: content.replaceAll('|PAUSE|', ''), voiceId: call.sid });
+
         return call;
     } catch (error) {
 

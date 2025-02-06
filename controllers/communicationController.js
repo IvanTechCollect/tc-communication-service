@@ -32,7 +32,7 @@ const sendCommunicationEmail = async (req, res) => {
             await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, activity_sent_date: new Date() });
 
         }
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, activity_sent_date: new Date() });
+
 
     } catch (error) {
         console.error('Error queuing email job:', error);

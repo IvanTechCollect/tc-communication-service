@@ -107,6 +107,20 @@ const emailJobFunction = async (job) => {
         await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: 2 }).where('id', proactiveId);
 
         if (!emailResult) {
+            await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: -1 }).where('id', proactiveId);
+
+            await CommunicationHandling.query().insert({
+                communication_type: 'Email',
+                unit_id: unitId,
+                result: -1,
+                communication_webhook_id: metadata.emailId,
+                reason: 'Sender email address not verified',
+                communication_date: new Date(),
+                status: 'Failed',
+                notes: '',
+                priority: 'High',
+                created_at: new Date()
+            })
 
             return false
         }

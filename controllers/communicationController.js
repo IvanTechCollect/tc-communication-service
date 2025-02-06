@@ -3,6 +3,7 @@ const { addCallToQueue } = require('../jobs/callJob');
 const { emailQueue, addEmailToQueue } = require('../jobs/emailJob');
 const { addLetterToQueue } = require('../jobs/letterJob');
 const { addSmsToQueue } = require('../jobs/smsJob');
+const CommunicationHandling = require('../models/CommunicationHandling');
 const ProactiveRoadmap = require('../models/ProactiveRoadmap');
 require('dotenv').config();
 
@@ -27,11 +28,7 @@ const sendCommunicationEmail = async (req, res) => {
         const result = await addEmailToQueue(jobData);
         console.log('Queue Result: ', result);
 
-        if (result == false) {
 
-            await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, activity_sent_date: new Date() });
-
-        }
 
 
     } catch (error) {

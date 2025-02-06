@@ -146,7 +146,7 @@ const letterJobFunction = async (job) => {
             letter_portal_number: env === 'PROD' ? osgResultArr[1].portal_number : 'Not sending to Osg in Staging',
             status: 1,
             activity_sent_date: new Date(),
-            sent_text_data_letter: blobResponse.url
+            sent_text_data_letter: content
         }).where('id', proactiveId);
 
         return true;

@@ -6,11 +6,35 @@ const { createLog } = require("../controllers/logController");
 const { v4: uuidv4 } = require('uuid');
 const Queue = require('bull');
 const redisUrL = require('../config/redisConfig');
+const Unit = require("../models/Unit");
+const { extractTemplate } = require("../controllers/templateController");
+const Company = require("../models/Company");
+const { prepareHTMLForTranslation, restoreBlobURLs, restoreBase64Images } = require("../helpers/helpers");
+const { generateLedgerHtml } = require("../controllers/ledgerTemplateController");
 // Email job function for the queue
 
 const emailJobFunction = async (job) => {
     try {
-        const { to, html, subject, unitId, proactiveId } = job.data;  // Access job data correctly
+        const { unitId, proactiveId } = job.data;  // Access job data correctly
+
+        const foundUnit = await Unit.query().findById(unitId);
+        const communityId = foundUnit.community;
+        const companyId = foundUnit.company_id;
+        const foundCompany = await Company.query().findById(companyId);
+
+        const foundStep = await ProactiveRoadmap.query().findById(proactiveId);
+
+        const ruleId = foundStep.rule_id;
+        const to = foundUnit.email;
+        const from = foundCompany.communication_email;
+        const preferredLanguage = foundUnit.preferred_language;
+
+
+        let templateData = await extractTemplate('EMAIL', ruleId, communityId, companyId);
+
+        let html = templateData[0];
+        let subject = templateData[1];
+        let includeLedger = templateData[2];
 
         if (!to || !html || !subject || !unitId) {
             if (!to) {
@@ -37,17 +61,43 @@ const emailJobFunction = async (job) => {
             emailId: emailId,
             unitId: unitId,
             proactiveId: proactiveId,
-            env: 'LOCAL',
+            env: 'PROD',
             emailType: 'Follow Up'
         };
 
-        const { htmlContent, formattedSubject } = await applyDataToTemplate(unitId, html, subject);
+        let { content, formattedSubject } = await applyDataToTemplate(unitId, html, subject);
+
+        let htmlContent = content;
 
         if (!htmlContent) {
             throw new Error('Failed to send email. No htmlContent');
         }
 
-        const emailResult = await sendEmail(to, htmlContent, formattedSubject, metadata);
+        if (preferredLanguage !== 'en') {
+
+            const { translateToDifferentLanguage } = await import('../controllers/aiController.mjs');
+
+            const preparedData = prepareHTMLForTranslation(htmlContent);
+
+            htmlContent = preparedData.cleanedHTML;
+
+
+            let translatedHTML = await translateToDifferentLanguage(htmlContent, preferredLanguage);
+
+
+            htmlContent = restoreBase64Images(translatedHTML, preparedData.base64Images);
+
+
+        }
+
+
+        if (includeLedger == 1) {
+
+            const ledgerHtml = await generateLedgerHtml(unitId);
+            htmlContent = `<div> <div>${htmlContent}</div>  <div>${ledgerHtml}</div> </div>`;
+        }
+
+        const emailResult = await sendEmail(from, to, htmlContent, formattedSubject, metadata);
 
         await createLog('Email Sent', `{"uuid":"${metadata.emailId}"}`, true, 'communication');
         await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: 2 }).where('id', proactiveId);
@@ -80,5 +130,7 @@ const addEmailToQueue = async (emailData) => {
         }
     });
 };
+
+
 
 module.exports = { addEmailToQueue };

@@ -6,12 +6,10 @@ const router = require('express').Router();
 router.get('/sendCommunicationToPartner/:unitId/:proactiveId', sendCommunicationAttachemnt);
 
 router.use('/emails', require('./email'));
+router.use('/letters', require('./letter'));
+router.use('/calls', require('./call'));
+router.use('/sms', require('./sms'));
 
-router.get('/', async (req, res) => {
-
-    res.send('Welcome');
-
-})
 
 
 module.exports = router;

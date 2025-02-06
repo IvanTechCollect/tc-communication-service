@@ -1,4 +1,6 @@
 .env
 node_modules
-output.pdf
-.gitignore
+*.pdf
+temp
+
+*.zip

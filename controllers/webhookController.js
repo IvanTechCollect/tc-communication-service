@@ -1,5 +1,7 @@
 const CommunicationHandling = require('../models/CommunicationHandling');
 const ProactiveRoadmap = require('../models/ProactiveRoadmap');
+const { sendEmail } = require('./emailController');
+const { forwardCallToClient } = require('./twilioController');
 
 const handleEmailWebhook = async (req, res) => {
 
@@ -9,11 +11,24 @@ const handleEmailWebhook = async (req, res) => {
     const { emailId, proactiveId, unitId, event, response, timestamp, reason, env, emailType } = req.body[0];
 
 
-    if (!emailType || emailType !== 'Follow Up' || !env || env !== 'LOCAL') {
+    if (!env || env !== 'LOCAL') {
 
         return;
 
     }
+
+    if (emailType === 'Follow Up') {
+
+        await handleCommunicationWebhooks(event, emailId, proactiveId, reason, unitId, timestamp, res);
+    } else if (emailType === 'Systen') {
+
+        await handleSystemWebhook(event, res);
+
+    }
+
+}
+
+const handleCommunicationWebhooks = async (event, emailId, proactiveId, reason, unitId, timestamp, res) => {
 
 
     const foundCommunicationResponse = await CommunicationHandling.query().where('communication_webhook_id', emailId).first();
@@ -75,7 +90,79 @@ const handleEmailWebhook = async (req, res) => {
     }
 
     res.sendStatus(200);
+
 }
 
 
-module.exports = { handleEmailWebhook }
+const handleCallWebhook = async (req, res) => {
+
+    res.sendStatus(200);
+
+    const { CallStatus, AnsweredBy, Digits } = req.body;
+
+    if (CallStatus == 'completed') {
+        console.log(AnsweredBy, req.query);
+
+    }
+
+}
+
+const callForwardWebhook = async (req, res) => {
+
+    console.log(req.query);
+    const { userPhone, companyPhone } = req.query;
+
+    const Digits = req.body.Digits;
+
+    console.log(Digits);
+
+    const result = await forwardCallToClient({ Digits, companyPhone });
+
+
+    res.type('text/xml').send(result);
+}
+
+
+const handleSmsWebhook = async (req, res) => {
+
+    const { MessageStatus, MessageSid } = req.body;
+    const { proactiveId } = req.query;
+
+    if (MessageStatus == 'delivered') {
+
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1 });
+
+    } else if (MessageStatus === 'sent') {
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 2 });
+
+    } else {
+
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
+
+    }
+    console.log('SMS Send Status', MessageStatus);
+    res.sendStatus(200); // Respond to Twilio that we received the webhook
+
+}
+
+const handleSystemWebhook = async (event, res) => {
+
+    if (event !== 'delivered') {
+
+        const to = 'support@techcollect.ai';
+        const html = '';
+
+        const result = await sendEmail(to, html, 'Failed Sending System Email')
+
+        if (!result) {
+            await res.status(500).json({ error: 'Cant Send System Notification Email' });
+        }
+
+        await res.sendStatus(200);
+
+    }
+
+}
+
+
+module.exports = { handleEmailWebhook, handleCallWebhook, callForwardWebhook, handleSmsWebhook }

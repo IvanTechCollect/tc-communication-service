@@ -65,7 +65,8 @@ const extractData = async (unitId) => {
             remittance_state: remittanceState,
             remittance_zip: remittanceZip,
             remittance_name: remittanceName,
-            assoc_code: foundCommunity.pield
+            assoc_code: foundCommunity.pield,
+            pause: `|PAUSE|`
         };
 
         return data;
@@ -97,26 +98,27 @@ const applyDataToTemplate = async (unitId, templateContent, subject = null) => {
             content = content.replaceAll(placeholder, value);
         }
 
+        content = content.replaceAll(/{{(.*?)}}/g, '');
+
         if (!subject) {
-            return { htmlContent: content };
+            return { content: content };
 
         }
 
         let newSubject = subject;
-
         for (let key of Object.keys(data)) {
             const placeholder = `{{${key}}}`;
             const value = data[key] !== undefined && data[key] !== null ? data[key] : ''; // Replace undefined/null with empty string
             newSubject = newSubject.replaceAll(placeholder, value);
         }
         return {
-            htmlContent: content,
+            content: content,
             formattedSubject: newSubject
         }
     } catch (error) {
         console.log(error);
         return {
-            htmlContent: null,
+            content: null,
             formattedSubject: null
         }
     }

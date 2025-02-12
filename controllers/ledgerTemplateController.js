@@ -86,13 +86,17 @@ const generateLedgerHtml = async (unitId) => {
     }
 };
 
+const moment = require('moment');
+
+const moment = require('moment');
+
 function generateCincLedger(ledgerData, data) {
     let ledgerHtml = '';
     let total = 0;
     let isOdd = true;
 
     ledgerData.forEach(lineItem => {
-        const lineDate = moment(lineItem.created_at).format('MM/DD/YY');
+        const lineDate = moment(lineItem.created_at).format('MM/DD/YYYY');
 
         const row = {
             date: lineDate,
@@ -170,6 +174,29 @@ function generateCincLedger(ledgerData, data) {
             <h2 style="width: 100%; text-align: center; font-family: Arial, Helvetica, sans-serif;">Statement</h2>
 
             <table class="table-outline">
+                <tr>
+                    <td style="width: 33%; font-size: 14px;">
+                        ${data.unit_owner} <br />
+                        ${data.unit_address} <br />
+                        ${data.unit_city}, ${data.unit_state} ${data.unit_zip} <br />
+                    </td>
+                    <td style="width: 33%; text-align: center;"></td>
+                    <td style="width: 33%; text-align: center;">
+                        <table style="border: 2px solid #5f9deb; font-size: 14px; width: 80%; float: right;">
+                            <tr>
+                                <td style="padding-bottom: 15px; width: 50%; text-align: left; background-color: #5f9deb;">
+                                    <strong>Account Number:</strong>
+                                </td>
+                                <td style="padding-bottom: 15px; width: 50%;">
+                                    <strong>${data.account_number}</strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <table class="table-outline">
                 <thead>
                     <tr>
                         <th class="ledger-th"> Date </th>
@@ -187,6 +214,42 @@ function generateCincLedger(ledgerData, data) {
                 </tbody>
             </table>
 
+            <div style="letter-spacing: 2px; margin-top: 20px">
+                <span style="display: inline-block; width: 100%; border-top: 1px dashed black; text-align: center;">
+                    <i> Please see below for payment instructions </i>
+                </span>
+            </div>
+
+            <table class="table-outline">
+                <tbody>
+                    <tr>
+                        <td style="width: 20%; font-size: 14px;">
+                            <div>Re: ${data.unit_address} Past Due Balance </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table class="table-outline">
+                <tbody>
+                    <tr>
+                        <td style="width: 10%; text-indent: 20px; font-size: 14px; vertical-align: top;">
+                            To:
+                        </td>
+                        <td style="width: 33%; font-size: 14px;">
+                            ${data.community_name}<br>
+                            c/o ${data.company_name} <br>
+                            ${data.remittance_address} <br>
+                            ${data.remittance_city}, ${data.remittance_state} ${data.remittance_zip}<br>
+                        </td>
+                        <td style="width: 43%; text-align: left;">
+                            <div style="font-weight: 700">Mail Payments To:</div>
+                            <div><b>${data.community_name}</b></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
             <div style="text-align: center;">
                 <span style="display: inline-block; width: 100%; border-top: 1px solid black;"></span>
                 <span>
@@ -199,6 +262,7 @@ function generateCincLedger(ledgerData, data) {
 
     return finalHtml;
 }
+
 
 function generateVantacaLedger(ledgerData, data) {
     let total = 0;

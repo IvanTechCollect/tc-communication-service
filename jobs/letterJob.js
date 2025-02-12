@@ -24,6 +24,9 @@ const {
 const {
     generateLedgerHtml,
 } = require("../controllers/ledgerTemplateController");
+const TimelineSettings = require('../models/TimelineSettings');
+const ScheduledStep = require('../models/ScheduledStep');
+const { scheduleNextStep } = require('../controllers/scheduleController');
 
 const env = process.env.DB_ENV;
 
@@ -149,6 +152,9 @@ const letterJobFunction = async (job) => {
             sent_text_data_letter: content
         }).where('id', proactiveId);
 
+
+        await scheduleNextStep(foundUnit.id, foundStep.elapsed_days);
+
         return true;
     } catch (error) {
         console.log(error);
@@ -176,5 +182,8 @@ const addLetterToQueue = async (letterData) => {
 
     return result; // Return the result (true or false) after job completion
 };
+
+
+
 
 module.exports = { addLetterToQueue };

@@ -2,6 +2,7 @@ const CommunicationHandling = require('../models/CommunicationHandling');
 const ProactiveRoadmap = require('../models/ProactiveRoadmap');
 const VoiceCallback = require('../models/VoiceCallback');
 const { sendEmail } = require('./emailController');
+const { scheduleNextStep } = require('./scheduleController');
 const { forwardCallToClient } = require('./twilioController');
 
 const handleEmailWebhook = async (req, res) => {
@@ -58,6 +59,8 @@ const handleCommunicationWebhooks = async (event, emailId, proactiveId, reason, 
         result = 1;
         shouldRecordResponse = true;
         await ProactiveRoadmap.query().update({ status: 1 }).where('id', proactiveId);
+        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
+        await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
         result = 1;
     } else if (event === 'dropped' || event === 'failed') {
         commStatus = 'Failed';
@@ -66,6 +69,8 @@ const handleCommunicationWebhooks = async (event, emailId, proactiveId, reason, 
         shouldRecordResponse = true;
         priority = 'Medium';
         await ProactiveRoadmap.query().update({ status: -1 }).where('id', proactiveId);
+        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
+        await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
 
     } else {
         shouldRecordResponse = false;
@@ -104,7 +109,7 @@ const handleCallWebhook = async (req, res) => {
 
     if (CallStatus == 'completed') {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, activity_sent_date: new Date() });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, activity_sent_date: new Date(c) });
 
         await VoiceCallback.query().insert({
             voiceId: req.body.CallSid,
@@ -116,6 +121,10 @@ const handleCallWebhook = async (req, res) => {
             created_at: new Date(),
             response: JSON.stringify(req.body)
         })
+
+        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
+
+        await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
     }
 
 }
@@ -154,6 +163,10 @@ const handleSmsWebhook = async (req, res) => {
 
     }
     console.log('SMS Send Status', MessageStatus);
+    const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
+
+    await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
+
     res.sendStatus(200); // Respond to Twilio that we received the webhook
 
 }

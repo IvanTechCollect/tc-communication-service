@@ -86,9 +86,6 @@ const generateLedgerHtml = async (unitId) => {
     }
 };
 
-const moment = require('moment');
-
-const moment = require('moment');
 
 function generateCincLedger(ledgerData, data) {
     let ledgerHtml = '';

@@ -1,5 +1,6 @@
 const ScheduledStep = require('../models/ScheduledStep');
 const ProactiveRoadmap = require('../models/ProactiveRoadmap');
+const moment = require('moment');
 
 const scheduleNextStep = async (unitId, days) => {
 
@@ -12,7 +13,7 @@ const scheduleNextStep = async (unitId, days) => {
             unit_id: unitId,
             proactive_id: stepToSchedule.id,
             completed: 0,
-            scheduled_at: moment().add({ days: days }).format(),
+            scheduled_at: moment().add({ days: days }).toDate(),
             created_at: new Date()
         })
 

@@ -109,7 +109,7 @@ const handleCallWebhook = async (req, res) => {
 
     if (CallStatus == 'completed') {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, activity_sent_date: new Date(c) });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, activity_sent_date: new Date() });
 
         await VoiceCallback.query().insert({
             voiceId: req.body.CallSid,
@@ -123,8 +123,9 @@ const handleCallWebhook = async (req, res) => {
         })
 
         const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
-
-        await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
+        if (updatedRoadmap.communication === 'Call') {
+            await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
+        }
     }
 
 }

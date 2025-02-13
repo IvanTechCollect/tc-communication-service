@@ -1,4 +1,4 @@
-const { BlobServiceClient } = require('@azure/storage-blob');
+const { BlobServiceClient, StorageSharedKeyCredential, generateBlobSASQueryParameters, BlobSASPermissions } = require("@azure/storage-blob");
 const { convertHtmlToPdfFile } = require('./fileController');
 require('dotenv').config();
 
@@ -33,6 +33,7 @@ const uploadBlob = async (fileContent, fileName) => {
         }
 
 
+
         const uploadedResponse = await blockBlobClient.upload(content, content.length);
 
         console.log(`Upload block blob ${blobName} successfully`);
@@ -42,6 +43,44 @@ const uploadBlob = async (fileContent, fileName) => {
         console.log(containerName, connectionString);
         return { result: false }
     }
+}
+
+const getAzureFileSAS = async (fileName) => {
+    try {
+        // Create BlobServiceClient
+        const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+        const containerClient = blobServiceClient.getContainerClient(containerName);
+        const blobClient = containerClient.getBlobClient(fileName);
+
+        // Define permissions (read-only) and expiry time
+        const expiresOn = new Date();
+        expiresOn.setHours(expiresOn.getHours() + 1); // Expires in 1 hour
+        const sasOptions = {
+            expiresOn: expiresOn, // Link valid for 1 hour
+            permissions: BlobSASPermissions.parse("r"), // Read-only permission
+        };
+
+        // Generate SAS token
+        const sasToken = generateBlobSASQueryParameters(
+            {
+                containerName: containerName,
+                blobName: fileName,
+                permissions: sasOptions.permissions,
+                expiresOn: sasOptions.expiresOn,
+
+            },
+            new StorageSharedKeyCredential(process.env.AZURE_ACCOUNT,
+                process.env.AZURE_KEY)
+        );
+
+        // Construct the download link
+        const downloadLink = `${blobClient.url}?${sasToken}`;
+        return downloadLink;
+
+    } catch (error) {
+        console.error("Error generating download link:", error.message);
+        return null;
+    }
 
 
 
@@ -50,4 +89,4 @@ const uploadBlob = async (fileContent, fileName) => {
 
 
 
-module.exports = { uploadBlob }
+module.exports = { uploadBlob, getAzureFileSAS }

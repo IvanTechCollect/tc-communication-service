@@ -20,6 +20,7 @@ const scheduleNextStep = async (unitId, days) => {
     }
 
 
+    await ProactiveRoadmap.query().where('id', stepToSchedule.id).update('is_scheduled', 1);
 
 
 

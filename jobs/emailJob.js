@@ -124,7 +124,6 @@ const emailJobFunction = async (job) => {
 
             return false
         }
-        console.log('Email sent successfully', emailId);
         return true;
     } catch (error) {
         console.log(error);

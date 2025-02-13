@@ -10,12 +10,9 @@ const { readLog, sendCommunicationCall } = require('./controllers/communicationC
 
 const connectToMongoDb = require('./config/mongoDbConn');
 const apiKeyMiddleware = require('./middleware/checkAuth');
-const { testQueue } = require('./jobs/testJob');
-const { uploadBlob } = require('./controllers/azureController');
-const { convertHtmlToPdfFile } = require('./controllers/fileController');
-const { addLetterToQueue } = require('./jobs/letterJob');
-const { makeCall } = require('./controllers/twilioController');
-const { addCallToQueue } = require('./jobs/callJob');
+const cors = require('cors');
+
+app.use(cors());
 
 
 //connectDb();

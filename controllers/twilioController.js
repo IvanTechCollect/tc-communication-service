@@ -98,12 +98,18 @@ const makeCall = async (data) => {
 
         const twiml = new twilio.twiml.VoiceResponse();
 
-        for (let portion of content.split('|PAUSE|')) {
-            if (portion.trim().length > 0) { // Skip empty text portions
-                twiml.say({ language: voiceLanguage, voice: voice, }, portion);
+        if (content.includes('|PAUSE|')) {
+            for (let portion of content.split('|PAUSE|')) {
+                if (portion.trim().length > 0) { // Skip empty text portions
+                    twiml.say({ language: voiceLanguage, voice: voice, }, portion);
+                }
+                twiml.pause({ length: 1 })
             }
-            twiml.pause({ length: 1 })
+        } else {
+            twiml.say({ language: voiceLanguage, voice: voice, }, content);
         }
+
+
 
         const gather = twiml.gather({
             input: 'dtmf',

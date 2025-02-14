@@ -139,7 +139,8 @@ const makeCall = async (data) => {
                 statusCallbackEvent: ['answered', 'completed',],
                 statusCallback: `https://tc-communications.onrender.com/webhooks/call?proactiveId=${proactiveId}`,
                 statusCallbackMethod: "POST",
-                machineDetection: "Enable", // Enable voicemail detection
+                machineDetection: "DetectMessageEnd",  // Change this
+                answeringMachineDetection: "DetectMessageEnd" // Add thi
             });
 
 

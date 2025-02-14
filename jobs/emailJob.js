@@ -11,12 +11,15 @@ const { extractTemplate } = require("../controllers/templateController");
 const Company = require("../models/Company");
 const { prepareHTMLForTranslation, restoreBlobURLs, restoreBase64Images } = require("../helpers/helpers");
 const { generateLedgerHtml } = require("../controllers/ledgerTemplateController");
+const { scheduleNextStep } = require("../controllers/scheduleController");
 // Email job function for the queue
 require('dotenv').config();
 
 const emailJobFunction = async (job) => {
     try {
         const { unitId, proactiveId } = job.data;  // Access job data correctly
+
+        console.log(`${unitId} : ${proactiveId}`);
 
         const foundUnit = await Unit.query().findById(unitId);
         const communityId = foundUnit.community;
@@ -53,8 +56,12 @@ const emailJobFunction = async (job) => {
                 });
             }
 
-            await ProactiveRoadmap.query().update({ status: -1 }).where('id', proactiveId);
-            throw new Error('Missing required fields: to, html, subject, or unitId.');
+            await ProactiveRoadmap.query().update({ status: -1, is_scheduled: 0 }).where('id', proactiveId);
+
+
+            await scheduleNextStep(unitId, foundStep.elapsed_days);
+
+            console.error('Missing required fields: to, html, subject, or unitId.');
         }
 
         const emailId = uuidv4();

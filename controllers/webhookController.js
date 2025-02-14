@@ -151,18 +151,20 @@ const handleSmsWebhook = async (req, res) => {
 
         await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, is_scheduled: 0 });
 
+
     } else if (MessageStatus === 'sent') {
         await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 2, is_scheduled: 0 });
 
+        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
+
+        await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
     } else {
 
         await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, is_scheduled: 0 });
 
     }
     console.log('SMS Send Status', MessageStatus);
-    const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
 
-    await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
 
     res.sendStatus(200); // Respond to Twilio that we received the webhook
 

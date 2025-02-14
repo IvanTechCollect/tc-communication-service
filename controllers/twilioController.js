@@ -211,7 +211,7 @@ const sendSMS = async (data) => {
 
         const ruleId = foundTimelineStep.rule_id;
 
-        const foundTemplate = await extractTemplate('CALL', ruleId, communityId, companyId);
+        const foundTemplate = await extractTemplate('SMS', ruleId, communityId, companyId);
 
         if (!foundTemplate) {
 

@@ -57,9 +57,8 @@ const handleCommunicationWebhooks = async (event, emailId, proactiveId, reason, 
         commStatus = 'Delivered';
         result = 1;
         shouldRecordResponse = true;
-        await ProactiveRoadmap.query().update({ status: 1, is_scheduled: 0 }).where('id', proactiveId);
+        await ProactiveRoadmap.query().update({ status: 1, }).where('id', proactiveId);
         const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
-        await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
         result = 1;
     } else if (event === 'dropped' || event === 'failed') {
         commStatus = 'Failed';
@@ -67,9 +66,8 @@ const handleCommunicationWebhooks = async (event, emailId, proactiveId, reason, 
         result = -1;
         shouldRecordResponse = true;
         priority = 'Medium';
-        await ProactiveRoadmap.query().update({ status: -1, is_scheduled: 0 }).where('id', proactiveId);
-        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
-        await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
+        await ProactiveRoadmap.query().update({ status: -1, }).where('id', proactiveId);
+
 
     } else {
         shouldRecordResponse = false;
@@ -108,7 +106,7 @@ const handleCallWebhook = async (req, res) => {
 
     if (CallStatus == 'completed') {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, activity_sent_date: new Date(), is_scheduled: 0 });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, activity_sent_date: new Date(), });
 
         await VoiceCallback.query().insert({
             voiceId: req.body.CallSid,
@@ -120,15 +118,6 @@ const handleCallWebhook = async (req, res) => {
             created_at: new Date(),
             response: JSON.stringify(req.body)
         })
-
-
-        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
-
-        const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
-
-        const days = nextAvailableStep.days - updatedRoadmap.days;
-
-        await scheduleNextStep(updatedRoadmap.unit_id, days)
     }
 
 }
@@ -153,18 +142,16 @@ const handleSmsWebhook = async (req, res) => {
 
     if (MessageStatus == 'delivered') {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, is_scheduled: 0 });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1 });
 
 
     } else if (MessageStatus === 'sent') {
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 2, is_scheduled: 0 });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 2 });
 
-        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
 
-        await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
     } else {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, is_scheduled: 0 });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
 
     }
     console.log('SMS Send Status', MessageStatus);

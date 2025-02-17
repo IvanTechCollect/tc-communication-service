@@ -13,13 +13,16 @@ const { prepareHTMLForTranslation, restoreBlobURLs, restoreBase64Images } = requ
 const { generateLedgerHtml } = require("../controllers/ledgerTemplateController");
 const { scheduleNextStep } = require("../controllers/scheduleController");
 // Email job function for the queue
+
+
 require('dotenv').config();
 
 const emailJobFunction = async (job) => {
-    try {
-        const { unitId, proactiveId } = job.data;  // Access job data correctly
 
-        console.log(`${unitId} : ${proactiveId}`);
+    const { unitId, proactiveId } = job.data;  // Access job data correctly
+
+    try {
+
 
         const foundUnit = await Unit.query().findById(unitId);
         const communityId = foundUnit.community;
@@ -71,10 +74,10 @@ const emailJobFunction = async (job) => {
 
 
 
-            await ProactiveRoadmap.query().update({ status: -1, is_scheduled: 0 }).where('id', proactiveId);
+            await ProactiveRoadmap.query().update({ status: -1 }).where('id', proactiveId);
 
 
-            await scheduleNextStep(unitId, foundStep.elapsed_days);
+            await scheduleNextStep(unitId);
 
             console.error('Missing required fields: to, html, subject, or unitId.');
 
@@ -129,42 +132,13 @@ const emailJobFunction = async (job) => {
 
         if (!emailResult) {
 
-            await CommunicationHandling.query().insert({
-                proactive_id: proactiveId,
-                communication_webhook_id: '',
-                result: -1,
-                unit_id: unitId,
-                communication_type: 'Email',
-                status: 'Failed',
-                reason: 'Invalid sender address.',
-                communication_date: new Date(),
-                notes: '',
-                priority: 'Medium',
-            });
 
-
-            await ProactiveRoadmap.query().update({ status: -1, is_scheduled: 0 }).where('id', proactiveId);
-
-
-            await scheduleNextStep(unitId, foundStep.elapsed_days);
-        }
-
-
-        await createLog('Email Sent', `{"uuid":"${metadata.emailId}"}`, true, 'communication');
-        await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: 2 }).where('id', proactiveId);
-
-        if (!emailResult) {
-
-
-            await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, is_scheduled: 0 });
+            await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
 
             const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
 
-            const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
 
-            const days = nextAvailableStep.days - updatedRoadmap.days;
-
-            await scheduleNextStep(updatedRoadmap.unit_id, days)
+            await scheduleNextStep(updatedRoadmap.unit_id)
 
             await CommunicationHandling.query().insert({
                 proactive_id: proactiveId,
@@ -182,25 +156,28 @@ const emailJobFunction = async (job) => {
 
             return false
         }
+
+        await createLog('Email Sent', `{"uuid":"${metadata.emailId}"}`, true, 'communication');
+        await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: 2 }).where('id', proactiveId);
+
+
         return true;
     } catch (error) {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, is_scheduled: 0 });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
 
         const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
 
-        const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
 
-        const days = nextAvailableStep.days - updatedRoadmap.days;
 
-        await scheduleNextStep(updatedRoadmap.unit_id, days)
+        await scheduleNextStep(updatedRoadmap.unit_id)
 
         await CommunicationHandling.query().insert({
             proactive_id: proactiveId,
             communication_type: 'Email',
             unit_id: updatedRoadmap.unit_id,
             result: -1,
-            communication_webhook_id: metadata.emailId,
+            communication_webhook_id: '',
             reason: 'Internal Server Error.',
             communication_date: new Date(),
             status: 'Failed',

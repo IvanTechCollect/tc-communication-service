@@ -34,11 +34,13 @@ const checkPhoneNumber = async (phoneNumber) => {
 
 const makeCall = async (data) => {
 
+    const { proactiveId, unitId } = data;
+
+
     try {
 
 
 
-        const { proactiveId, unitId } = data;
 
         const foundUnit = await Unit.query().where('id', unitId).first();
         const communityId = foundUnit.community;
@@ -149,21 +151,20 @@ const makeCall = async (data) => {
 
         await ProactiveRoadmap.query().where('id', proactiveId).update({
             sent_text_data: content.replaceAll('|PAUSE|', ''),
-            voiceId: call.sid
+            voiceId: call.sid,
+            status: 2
         });
+
+        console.log("📞 Call Sent");
+
+        await scheduleNextStep(unitId);
 
         return true;
     } catch (error) {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, is_scheduled: 0 });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
 
-        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
-
-        const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
-
-        const days = nextAvailableStep.days - updatedRoadmap.days;
-
-        await scheduleNextStep(updatedRoadmap.unit_id, days)
+        await scheduleNextStep(unitId)
 
 
 
@@ -206,10 +207,10 @@ const forwardCallToClient = async (data) => {
 
 
 const sendSMS = async (data) => {
+    const { proactiveId, unitId } = data;
 
     try {
 
-        const { proactiveId, unitId } = data;
 
         const foundUnit = await Unit.query().where('id', unitId).first();
         const communityId = foundUnit.community;
@@ -220,10 +221,10 @@ const sendSMS = async (data) => {
         const isValid = await checkPhoneNumber(phoneNumber);
 
         if (!isValid) {
-
-            console.log("❌ Invalid phone number.");
             await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
-            return res.status(400).json({ error: 'Invalid Phone Number' });
+
+            throw new Error("❌ Invalid phone number.");
+
         }
         console.clear();
         console.log("✅ The phone number is valid!");
@@ -266,20 +267,16 @@ const sendSMS = async (data) => {
             return false;
         }
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ sent_text_data: content, activity_sent_date: new Date() });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ sent_text_data: content, activity_sent_date: new Date(), status: 2 });
         console.log('SMS SENT');
         return true;
 
     } catch (error) {
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, is_scheduled: 0 });
 
-        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
 
-        const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ sent_text_data: content, activity_sent_date: new Date(), status: -1 });
 
-        const days = nextAvailableStep.days - updatedRoadmap.days;
-
-        await scheduleNextStep(updatedRoadmap.unit_id, days)
+        await scheduleNextStep(unitId);
 
 
 

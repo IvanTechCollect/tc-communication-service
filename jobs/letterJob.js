@@ -31,8 +31,10 @@ const { scheduleNextStep } = require('../controllers/scheduleController');
 const env = process.env.DB_ENV;
 
 const letterJobFunction = async (job) => {
+
+    let { unitId, proactiveId } = job.data;
+
     try {
-        let { unitId, proactiveId } = job.data;
 
         const foundUnit = await Unit.query().where("id", unitId).first();
         const foundCompany = await Company.query()
@@ -134,6 +136,13 @@ const letterJobFunction = async (job) => {
             osgResultArr = await sendLetterToOsg(certified, '12345678', '');
             if (osgResultArr[0] == false) {
 
+                const updateResult = await ProactiveRoadmap.query().update({
+                    letter_portal_number: env === 'PROD' ? osgResultArr[1].portal_number : 'Not sending to Osg in Staging',
+                    status: -1,
+                    activity_sent_date: new Date(),
+                }).where('id', proactiveId);
+                await scheduleNextStep(foundUnit.id);
+
                 return false
             }
         }
@@ -154,19 +163,16 @@ const letterJobFunction = async (job) => {
 
 
 
-        await scheduleNextStep(foundUnit.id, foundStep.elapsed_days);
+        await scheduleNextStep(foundUnit.id);
 
         return true;
     } catch (error) {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ 'status': -1, 'is_scheduled': 0 });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ 'status': -1, });
 
         const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
-        const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
 
-        const days = nextAvailableStep.days - updatedRoadmap.days;
-
-        await scheduleNextStep(foundUnit.id, days);
+        await scheduleNextStep(updatedRoadmap.unit_id);
 
         console.log(error);
         console.log('Scheduled Next Step');

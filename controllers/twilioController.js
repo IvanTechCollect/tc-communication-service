@@ -4,6 +4,7 @@ const { htmlToString } = require("../helpers/helpers");
 const { extractTemplate } = require('./templateController');
 const ProactiveRoadmap = require("../models/ProactiveRoadmap");
 const Unit = require("../models/Unit");
+const { scheduleNextStep } = require("./scheduleController");
 require('dotenv').config();
 
 
@@ -154,7 +155,26 @@ const makeCall = async (data) => {
         return true;
     } catch (error) {
 
-        console.log(error);;
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, is_scheduled: 0 });
+
+        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
+
+        const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
+
+        const days = nextAvailableStep.days - updatedRoadmap.days;
+
+        await scheduleNextStep(updatedRoadmap.unit_id, days)
+
+
+
+        console.log(error?.response?.data);
+
+        console.log("❌ Error making call:", error.message);
+
+        console.log("Scheduled Next Step.");
+
+
+        return false;
     }
 
 }
@@ -251,7 +271,25 @@ const sendSMS = async (data) => {
         return true;
 
     } catch (error) {
-        console.log(error);
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, is_scheduled: 0 });
+
+        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
+
+        const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
+
+        const days = nextAvailableStep.days - updatedRoadmap.days;
+
+        await scheduleNextStep(updatedRoadmap.unit_id, days)
+
+
+
+        console.log(error?.response?.data);
+
+        console.log("❌ Error sending sms:", error.message);
+
+        console.log("Scheduled Next Step.");
+
+
         return false;
     }
 

@@ -153,11 +153,25 @@ const letterJobFunction = async (job) => {
         }).where('id', proactiveId);
 
 
+
         await scheduleNextStep(foundUnit.id, foundStep.elapsed_days);
 
         return true;
     } catch (error) {
+
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ 'status': -1, 'is_scheduled': 0 });
+
+        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
+        const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
+
+        const days = nextAvailableStep.days - updatedRoadmap.days;
+
+        await scheduleNextStep(foundUnit.id, days);
+
         console.log(error);
+        console.log('Scheduled Next Step');
+
+
         return false;
     }
 };

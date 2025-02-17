@@ -154,7 +154,17 @@ const emailJobFunction = async (job) => {
         await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: 2 }).where('id', proactiveId);
 
         if (!emailResult) {
-            await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: -1 }).where('id', proactiveId);
+
+
+            await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, is_scheduled: 0 });
+
+            const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
+
+            const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
+
+            const days = nextAvailableStep.days - updatedRoadmap.days;
+
+            await scheduleNextStep(updatedRoadmap.unit_id, days)
 
             await CommunicationHandling.query().insert({
                 proactive_id: proactiveId,
@@ -174,8 +184,32 @@ const emailJobFunction = async (job) => {
         }
         return true;
     } catch (error) {
-        console.log(error);
-        return false;
+
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, is_scheduled: 0 });
+
+        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
+
+        const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
+
+        const days = nextAvailableStep.days - updatedRoadmap.days;
+
+        await scheduleNextStep(updatedRoadmap.unit_id, days)
+
+        await CommunicationHandling.query().insert({
+            proactive_id: proactiveId,
+            communication_type: 'Email',
+            unit_id: updatedRoadmap.unit_id,
+            result: -1,
+            communication_webhook_id: metadata.emailId,
+            reason: 'Internal Server Error.',
+            communication_date: new Date(),
+            status: 'Failed',
+            notes: '',
+            priority: 'High',
+            created_at: new Date()
+        })
+
+        return false
     }
 };
 

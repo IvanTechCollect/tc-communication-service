@@ -121,10 +121,14 @@ const handleCallWebhook = async (req, res) => {
             response: JSON.stringify(req.body)
         })
 
+
         const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
-        if (updatedRoadmap.communication === 'Call') {
-            await scheduleNextStep(updatedRoadmap.unit_id, updatedRoadmap.elapsed_days)
-        }
+
+        const nextAvailableStep = await ProactiveRoadmap.query().where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
+
+        const days = nextAvailableStep.days - updatedRoadmap.days;
+
+        await scheduleNextStep(updatedRoadmap.unit_id, days)
     }
 
 }

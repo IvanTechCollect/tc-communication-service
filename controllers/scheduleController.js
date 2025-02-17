@@ -5,8 +5,14 @@ const moment = require('moment');
 const scheduleNextStep = async (unitId, days) => {
 
 
-
     const stepToSchedule = await ProactiveRoadmap.query().where('unit_id', unitId).where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
+
+    if (!stepToSchedule) {
+        return;
+    }
+
+    await ScheduledStep.query().where('unit_id', unitId).delete();
+
 
     if (stepToSchedule) {
         await ScheduledStep.query().insert({
@@ -19,6 +25,8 @@ const scheduleNextStep = async (unitId, days) => {
 
     }
 
+
+    await ProactiveRoadmap.query().where('id', unitId).update({ 'is_scheduled': 0 });
 
     await ProactiveRoadmap.query().where('id', stepToSchedule.id).update({ 'is_scheduled': 1 });
 

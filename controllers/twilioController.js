@@ -277,7 +277,7 @@ const sendSMS = async (data) => {
     } catch (error) {
 
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ sent_text_data: content, activity_sent_date: new Date(), status: -1 });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ activity_sent_date: new Date(), status: -1 });
 
         await scheduleNextStep(unitId);
 

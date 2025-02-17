@@ -4,6 +4,8 @@ const moment = require('moment');
 
 const scheduleNextStep = async (unitId) => {
 
+    console.log('Scheduling next step for unit:', unitId);
+
 
     const stepToSchedule = await ProactiveRoadmap.query().where('unit_id', unitId).where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
 

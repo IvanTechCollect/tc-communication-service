@@ -18,6 +18,7 @@ const scheduleNextStep = async (unitId) => {
 
     await ScheduledStep.query().where('unit_id', unitId).delete();
 
+    await ProactiveRoadmap.query().where('id', unitId).update({ 'is_scheduled': 0 });
 
     if (stepToSchedule) {
         await ScheduledStep.query().insert({
@@ -29,9 +30,6 @@ const scheduleNextStep = async (unitId) => {
         })
 
         await ProactiveRoadmap.query().where('id', stepToSchedule.id).update({ 'is_scheduled': 1 });
-    } else {
-        await ProactiveRoadmap.query().where('id', unitId).update({ 'is_scheduled': 0 });
-
     }
 
 

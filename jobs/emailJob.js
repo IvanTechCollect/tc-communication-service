@@ -127,6 +127,29 @@ const emailJobFunction = async (job) => {
 
         const emailResult = await sendEmail(from, to, htmlContent, formattedSubject, metadata);
 
+        if (!emailResult) {
+
+            await CommunicationHandling.query().insert({
+                proactive_id: proactiveId,
+                communication_webhook_id: '',
+                result: -1,
+                unit_id: unitId,
+                communication_type: 'Email',
+                status: 'Failed',
+                reason: 'Invalid sender address.',
+                communication_date: new Date(),
+                notes: '',
+                priority: 'Medium',
+            });
+
+
+            await ProactiveRoadmap.query().update({ status: -1, is_scheduled: 0 }).where('id', proactiveId);
+
+
+            await scheduleNextStep(unitId, foundStep.elapsed_days);
+        }
+
+
         await createLog('Email Sent', `{"uuid":"${metadata.emailId}"}`, true, 'communication');
         await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: 2 }).where('id', proactiveId);
 

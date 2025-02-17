@@ -11,16 +11,31 @@ smsQueue.process(async (job) => {
 
 const addSmsToQueue = async (smsData) => {
     const job = await smsQueue.add(smsData, {
-        attempts: 3,
+        attempts: 5,
         backoff: {
-            type: 'exponential',
-            delay: 1000  // Retry every 1 second, increasing exponentially
-        }
+            type: 'fixed',
+            delay: 30000  // Retry every 1 second, increasing exponentially
+        },
+        removeOnComplete: true,
+        removeOnFail: false
     });
 
     const result = await job.finished();
 
     return result; // Return the result (true or false) after job completion
 };
+
+
+smsQueue.on('failed', async (job, err) => {
+    console.error(`Job ${job.id} failed:`, err);
+
+    // If the failure is due to a database issue, retry later
+    if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST') {
+        console.log(`Requeuing job ${job.id} after 30s...`);
+        setTimeout(async () => {
+            await job.retry();
+        }, 31000);
+    }
+});
 
 module.exports = { addSmsToQueue }

@@ -190,11 +190,13 @@ emailQueue.process(async (job) => {
 // Add email job to the queue with retry and backoff logic
 const addEmailToQueue = async (emailData) => {
     const job = await emailQueue.add(emailData, {
-        attempts: 3,
+        attempts: 5,
         backoff: {
-            type: 'exponential',
-            delay: 1000  // Retry every 1 second, increasing exponentially
-        }
+            type: 'fixed',
+            delay: 30000  // Retry every 1 second, increasing exponentially
+        },
+        removeOnComplete: true,
+        removeOnFail: false
     });
 
     const result = await job.finished();
@@ -202,6 +204,18 @@ const addEmailToQueue = async (emailData) => {
     return result;
 };
 
+
+emailQueue.on('failed', async (job, err) => {
+    console.error(`Job ${job.id} failed:`, err);
+
+    // If the failure is due to a database issue, retry later
+    if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST') {
+        console.log(`Requeuing job ${job.id} after 30s...`);
+        setTimeout(async () => {
+            await job.retry();
+        }, 31000);
+    }
+});
 
 
 module.exports = { addEmailToQueue };

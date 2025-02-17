@@ -6,7 +6,7 @@ const scheduleNextStep = async (unitId, days) => {
 
 
 
-    const stepToSchedule = await ProactiveRoadmap.query().where('unit_id', unitId).where('status', 0).where('is_scheduled', 0).first();
+    const stepToSchedule = await ProactiveRoadmap.query().where('unit_id', unitId).where('status', 0).where('communication_status', 1).where('is_scheduled', 0).first();
 
     if (stepToSchedule) {
         await ScheduledStep.query().insert({

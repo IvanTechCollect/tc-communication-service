@@ -51,8 +51,9 @@ const makeCall = async (data) => {
 
             console.log("❌ Invalid phone number.");
 
-            return res.status(400).json({ error: 'Invalid Phone Number' });
+            return false;
         }
+
         console.clear();
         console.log("✅ The phone number is valid!");
 

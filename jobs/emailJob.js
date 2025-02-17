@@ -40,6 +40,17 @@ const emailJobFunction = async (job) => {
         let subject = templateData[1];
         let includeLedger = templateData[2];
 
+        if (!subject || subject == '') {
+
+            subject = 'Email Follow Up';
+        }
+
+        console.log([
+            html,
+            subject,
+            includeLedger
+        ]);
+
         if (!to || !html || !subject || !unitId) {
             if (!to) {
                 await CommunicationHandling.query().insert({
@@ -52,9 +63,13 @@ const emailJobFunction = async (job) => {
                     reason: 'Invalid email address.',
                     communication_date: new Date(),
                     notes: '',
-                    priority: 'Medium'
+                    priority: 'Medium',
                 });
             }
+
+
+
+
 
             await ProactiveRoadmap.query().update({ status: -1, is_scheduled: 0 }).where('id', proactiveId);
 
@@ -62,6 +77,8 @@ const emailJobFunction = async (job) => {
             await scheduleNextStep(unitId, foundStep.elapsed_days);
 
             console.error('Missing required fields: to, html, subject, or unitId.');
+
+            return false;
         }
 
         const emailId = uuidv4();
@@ -117,6 +134,7 @@ const emailJobFunction = async (job) => {
             await ProactiveRoadmap.query().update({ sent_text_data: htmlContent, activity_sent_date: new Date(), status: -1 }).where('id', proactiveId);
 
             await CommunicationHandling.query().insert({
+                proactive_id: proactiveId,
                 communication_type: 'Email',
                 unit_id: unitId,
                 result: -1,

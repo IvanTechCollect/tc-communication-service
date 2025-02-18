@@ -57,7 +57,7 @@ const generateLedgerHtml = async (unitId) => {
             mailing_city: foundUnit.mail_city,
             mailing_state: foundUnit.mail_state,
             mailing_zip: foundUnit.mail_zip_code,
-            community_name: foundCommunity?.name || foundCompany.company_name,
+            community_name: foundCommunity?.community_name || foundCompany.company_name,
             community_address: foundCommunity?.address || foundCompany.address1,
             community_city: foundCommunity?.city || foundCompany.city,
             community_state: foundCommunity?.state || foundCompany.state,

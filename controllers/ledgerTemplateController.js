@@ -37,7 +37,7 @@ const generateLedgerHtml = async (unitId) => {
             remittance = await CompanyRemittance.query().where(`company_id`, foundUnit.company_id).first();
         }
 
-        const url = process.env.DB_END === 'LOCAL' ? 'http://20.163.205.160:6061' : 'https://app.techcollect.net';
+        const url = process.env.DB_ENV == 'LOCAL' ? 'http://20.163.205.160:6061' : 'https://app.techcollect.net';
 
         const data = {
             unit_owner: foundUnit.unit_name,

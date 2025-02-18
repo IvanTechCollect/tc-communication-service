@@ -133,7 +133,7 @@ const emailJobFunction = async (job) => {
         if (!emailResult) {
 
 
-            await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
+            await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, activity_sent_date: new Date() });
 
             const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
 
@@ -164,7 +164,10 @@ const emailJobFunction = async (job) => {
         return true;
     } catch (error) {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
+        await ProactiveRoadmap
+            .query()
+            .where('id', proactiveId)
+            .update({ status: -1, activity_sent_date: new Date() });
 
         const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
 

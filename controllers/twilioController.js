@@ -5,6 +5,7 @@ const { extractTemplate } = require('./templateController');
 const ProactiveRoadmap = require("../models/ProactiveRoadmap");
 const Unit = require("../models/Unit");
 const { scheduleNextStep } = require("./scheduleController");
+const CommunicationHandling = require("../models/CommunicationHandling");
 require('dotenv').config();
 
 
@@ -152,7 +153,8 @@ const makeCall = async (data) => {
         await ProactiveRoadmap.query().where('id', proactiveId).update({
             sent_text_data: content.replaceAll('|PAUSE|', ''),
             voiceId: call.sid,
-            status: 2
+            status: 2,
+            activity_sent_date: new Date()
         });
 
         console.log("📞 Call Sent");
@@ -162,7 +164,7 @@ const makeCall = async (data) => {
         return true;
     } catch (error) {
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
+        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, activity_sent_date: new Date() });
 
         await scheduleNextStep(unitId)
 
@@ -171,6 +173,20 @@ const makeCall = async (data) => {
         console.log(error?.response?.data);
 
         console.log("❌ Error making call:", error.message);
+
+        await CommunicationHandling.query().insert({
+            proactive_id: proactiveId,
+            communication_type: 'Call',
+            unit_id: unitId,
+            result: -1,
+            communication_webhook_id: '',
+            reason: error.message,
+            communication_date: new Date(),
+            status: 'Failed',
+            notes: '',
+            priority: 'Medium',
+            created_at: new Date()
+        });
 
         console.log("Scheduled Next Step.");
 
@@ -281,11 +297,21 @@ const sendSMS = async (data) => {
 
         await scheduleNextStep(unitId);
 
-
-
-        console.log(error?.response?.data);
-
         console.log("❌ Error sending sms:", error.message);
+
+        await CommunicationHandling.query().insert({
+            proactive_id: proactiveId,
+            communication_type: 'Call',
+            unit_id: unitId,
+            result: -1,
+            communication_webhook_id: '',
+            reason: error.message,
+            communication_date: new Date(),
+            status: 'Failed',
+            notes: '',
+            priority: 'Medium',
+            created_at: new Date()
+        });
 
         console.log("Scheduled Next Step.");
 

@@ -6,6 +6,7 @@ const ManageCommunity = require('../models/Community');
 const UnitFeeApplied = require('../models/UnitFeeApplied');
 const CommunityRemittance = require('../models/CommunityRemittance');
 const CompanyRemittance = require('../models/CompanyRemittance');
+require('dotenv').config();
 
 const generateLedgerHtml = async (unitId) => {
     try {
@@ -35,6 +36,8 @@ const generateLedgerHtml = async (unitId) => {
         if (!remittance) {
             remittance = await CompanyRemittance.query().where(`company_id`, foundUnit.company_id).first();
         }
+
+        const url = process.env.DB_END === 'LOCAL' ? 'http://20.163.205.160:6061' : 'https://app.techcollect.net';
 
         const data = {
             unit_owner: foundUnit.unit_name,
@@ -69,6 +72,7 @@ const generateLedgerHtml = async (unitId) => {
             remittance_name: remittance?.remittance_name || '',
             page_break: '<p style="page-break-before: always;">&nbsp;</p>',
             formal_date: moment().format('MMMM Do, YYYY'),
+            base_url: url
         };
 
         if (!partner) return '';
@@ -151,7 +155,7 @@ function generateCincLedger(ledgerData, data) {
                         ${data.company_city}, ${data.company_state} ${data.company_zip} <br />
                     </td>
                     <td style="width: 33%; text-align: center;">
-                        <img src="/images/users/${data.company_image}" width="100%" height="auto" />
+                        <img src="${data.base_url}/images/users/${data.company_image}" width="100%" height="auto" />
                     </td>
                     <td style="width: 33%; text-align: center;">
                         <table style="border: 2px solid #5f9deb; font-size: 14px; width: 80%; float: right;">

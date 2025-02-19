@@ -193,7 +193,7 @@ const addLetterToQueue = async (letterData) => {
         attempts: 5,
         backoff: {
             type: 'fixed',
-            delay: 30000  // Retry every 1 second, increasing exponentially
+            delay: 5000  // Retry every 1 second, increasing exponentially
         },
         removeOnComplete: true,
         removeOnFail: false

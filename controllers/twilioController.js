@@ -280,13 +280,14 @@ const sendSMS = async (data) => {
         });
 
         if (!twilioResponse) {
+            await scheduleNextStep(unitId);
+
             return false;
         }
 
         await ProactiveRoadmap.query().where('id', proactiveId).update({ sent_text_data: content, activity_sent_date: new Date(), status: 2 });
         console.log('SMS SENT');
 
-        await scheduleNextStep(unitId);
 
         return true;
 

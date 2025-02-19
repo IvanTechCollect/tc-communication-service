@@ -137,7 +137,6 @@ const letterJobFunction = async (job) => {
             if (osgResultArr[0] == false) {
 
                 const updateResult = await ProactiveRoadmap.query().update({
-                    letter_portal_number: env === 'PROD' ? osgResultArr[1].portal_number : 'Not sending to Osg in Staging',
                     status: -1,
                     activity_sent_date: new Date(),
                 }).where('id', proactiveId);

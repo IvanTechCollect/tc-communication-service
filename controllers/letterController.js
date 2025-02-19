@@ -141,12 +141,9 @@ const sendLetterToOsg = async (certified = 0, processorId) => {
         // Log headers for debugging
         console.log("🔍 Headers Sent:", form.getHeaders());
 
-        const formEntries = {};
-        for (const [key, value] of form) {
-            formEntries[key] = value instanceof fs.ReadStream ? `File: ${value.path}` : value;
-        }
-        console.log("🔍 FormData Contents:", formEntries);
 
+        const util = require('util');
+        console.log("🔍 FormData Dump:", util.inspect(form, { depth: 2 }));
 
         // Send request
         const response = await axios.post('https://orders.optimaloutsource.com/rest/api/1/order/new/', form, {

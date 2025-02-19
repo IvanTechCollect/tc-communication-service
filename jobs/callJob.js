@@ -29,14 +29,8 @@ const addCallToQueue = async (callData) => {
 
 callQueue.on('failed', async (job, err) => {
     console.error(`Job ${job.id} failed:`, err);
+    console.error(job.data);
 
-    // If the failure is due to a database issue, retry later
-    if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST') {
-        console.log(`Requeuing job ${job.id} after 30s...`);
-        setTimeout(async () => {
-            await job.retry();
-        }, 31000);
-    }
 });
 
 module.exports = { addCallToQueue }

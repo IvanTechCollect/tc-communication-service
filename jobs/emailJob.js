@@ -218,14 +218,7 @@ const addEmailToQueue = async (emailData) => {
 
 emailQueue.on('failed', async (job, err) => {
     console.error(`Job ${job.id} failed:`, err);
-
-    // If the failure is due to a database issue, retry later
-    if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST') {
-        console.log(`Requeuing job ${job.id} after 30s...`);
-        setTimeout(async () => {
-            await job.retry();
-        }, 31000);
-    }
+    console.error(job.data);
 });
 
 

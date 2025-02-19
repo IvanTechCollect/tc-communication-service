@@ -101,85 +101,63 @@ const sendLetterToOsg = async (certified = 0, processorId) => {
 
     try {
         const form = new FormData();
-        let product = certified === 1 ? 'CRT' : 'GM';
-        form.append('product', product);
-        form.append('processor_id', processorId);
+        form.append('product', certified === 1 ? 'CRT' : 'GM');
+        form.append('processor_id', String(processorId));
 
-        // Set correct file path in Render (use /tmp/)
         const filePath = path.join('/tmp', 'tempLetter.zip');
 
-        // Ensure file exists
         if (!fs.existsSync(filePath)) {
-            console.error("❌ Error: ZIP file does not exist at", filePath);
+            console.error("❌ File not found:", filePath);
             return [false, "File not found"];
         }
 
-        // Check file size
         const stats = fs.statSync(filePath);
         if (stats.size === 0) {
-            console.error("❌ Error: ZIP file is empty", filePath);
+            console.error("❌ Empty file:", filePath);
             return [false, "Empty file"];
         }
+
         console.log("✅ File exists, size:", stats.size, "bytes");
 
-        // Attach file (must match Laravel behavior)
-        form.append('file', fs.createReadStream(filePath), {
-            filename: 'invoicezipfile.zip',
-            contentType: 'application/zip',
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.on('error', (err) => {
+            console.error("❌ File Stream Error:", err);
         });
+        fileStream.on('open', async () => {
+            console.log("✅ File Stream Opened Successfully");
 
-        // Authentication
-        const username = process.env.OSG_USERNAME;
-        const password = process.env.OSG_PWD;
-        if (!username || !password) {
-            console.error("❌ Error: Missing OSG credentials.");
-            return [false, "Missing credentials"];
-        }
+            form.append('file', fileStream, {
+                filename: 'invoicezipfile.zip',
+                contentType: 'application/zip',
+            });
 
-        const authString = Buffer.from(`${username}:${password}`).toString('base64');
-
-        // Log headers for debugging
-        console.log("🔍 Headers Sent:", form.getHeaders());
-
-
-        const util = require('util');
-        console.log("🔍 FormData Dump:", util.inspect(form, { depth: 2 }));
-
-        // Send request
-        const response = await axios.post('https://orders.optimaloutsource.com/rest/api/1/order/new/', form, {
-            headers: {
+            const headers = {
                 ...form.getHeaders(),
                 'Authorization': `Basic ${authString}`,
-            },
-            maxBodyLength: Infinity, // Prevents file size errors
+            };
+
+            console.log("🔍 Sending request with headers:", headers);
+
+            try {
+                const response = await axios.post('https://orders.optimaloutsource.com/rest/api/1/order/new/', form, {
+                    headers: headers,
+                    maxBodyLength: Infinity,
+                });
+
+                console.log("✅ Response:", response.data);
+                return [true, response.data];
+
+            } catch (error) {
+                console.error("❌ Axios Error:", error.response ? error.response.data : error.message);
+                return [false, error.response ? error.response.data : error.message];
+            }
         });
-
-
-
-        const data = response.data;
-
-        if (data.portal_number) {
-            console.log("✅ Upload successful:", data);
-
-            // Delete temporary file
-            fs.unlinkSync(filePath);
-            console.log("✅ Temporary ZIP file deleted:", filePath);
-
-            return [true, data];
-        } else {
-            console.error("❌ Error: No portal_number received", data);
-            return [false, "No portal number"];
-        }
     } catch (error) {
-        if (error.response) {
-            console.error("❌ Axios Error:", error.response.status, error.response.data);
-            return [false, error.response.data];
-        } else {
-            console.error("❌ Unexpected Error:", error.message);
-            return [false, error.message];
-        }
+        console.error("❌ Unexpected Error:", error.message);
+        return [false, error.message];
     }
 };
+
 
 
 module.exports = { saveLetterToZipFile, sendLetterToOsg }

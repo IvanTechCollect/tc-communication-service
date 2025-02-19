@@ -7,7 +7,8 @@ const { forwardCallToClient } = require('./twilioController');
 
 const handleEmailWebhook = async (req, res) => {
 
-
+    console.log('Email Webhook Received');
+    console.log(req.body);
 
     const { emailId, proactiveId, unitId, event, response, timestamp, reason, env, emailType } = req.body[0];
 

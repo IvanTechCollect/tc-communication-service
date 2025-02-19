@@ -48,12 +48,6 @@ const emailJobFunction = async (job) => {
             subject = 'Email Follow Up';
         }
 
-        console.log([
-            html,
-            subject,
-            includeLedger
-        ]);
-
         if (!to || !html || !subject || !unitId) {
             if (!to) {
                 await CommunicationHandling.query().insert({

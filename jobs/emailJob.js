@@ -164,6 +164,9 @@ const emailJobFunction = async (job) => {
         return true;
     } catch (error) {
 
+
+        console.error('Error sending email:', error);
+
         await ProactiveRoadmap
             .query()
             .where('id', proactiveId)

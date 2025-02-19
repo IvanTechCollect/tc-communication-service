@@ -10,7 +10,7 @@ const saveLetterToZipFile = async (pdfBuffer, foundUnit, foundCompany, foundComm
     try {
         const tabValues = generateTabValues(foundUnit, foundCompany, foundCommunity, pdfName);
 
-        const zipFilePath = path.join(__dirname, '..', `${fileName}.zip`);
+        const zipFilePath = path.join(__dirname, '..', 'disk', `${fileName}.zip`);
 
         // Create a file output stream
         const output = fs.createWriteStream(zipFilePath);

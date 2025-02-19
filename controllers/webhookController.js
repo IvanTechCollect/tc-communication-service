@@ -11,17 +11,10 @@ const handleEmailWebhook = async (req, res) => {
 
     const { emailId, proactiveId, unitId, event, response, timestamp, reason, env, emailType } = req.body[0];
 
-
-    if (!env || env !== 'LOCAL') {
-
-        return;
-
-    }
-
     if (emailType === 'Follow Up') {
 
         await handleCommunicationWebhooks(event, emailId, proactiveId, reason, unitId, timestamp, res);
-    } else if (emailType === 'Systen') {
+    } else if (emailType === 'System') {
 
         await handleSystemWebhook(event, res);
 

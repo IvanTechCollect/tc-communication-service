@@ -120,7 +120,7 @@ const makeCall = async (data) => {
             input: 'dtmf',
             numDigits: 1,
             timeout: 5,
-            action: `https://tc-communication-service.onrender.com/webhooks/call/forward?` +
+            action: `https://tc-communication-service.onrender.com-1/webhooks/call/forward?` +
                 `proactiveId=${encodeURIComponent(proactiveId)}&` +
                 `userPhone=${encodeURIComponent(phoneNumber)}&` +
                 `companyPhone=${encodeURIComponent('+15038805879')}`,
@@ -142,7 +142,7 @@ const makeCall = async (data) => {
                 to: `+1${phoneNumber}`,  // Replace with recipient's phone number
                 from: process.env.TWILIO_NUMBER, // Replace with your Twilio phone number
                 statusCallbackEvent: ['answered', 'completed',],
-                statusCallback: `https://tc-communication-service.onrender.com/webhooks/call?proactiveId=${proactiveId}`,
+                statusCallback: `https://tc-communication-service.onrender.com-1/webhooks/call?proactiveId=${proactiveId}`,
                 statusCallbackMethod: "POST",
                 machineDetection: "DetectMessageEnd",  // Change this
                 answeringMachineDetection: "DetectMessageEnd" // Add thi
@@ -275,7 +275,7 @@ const sendSMS = async (data) => {
             body: content,
             from: process.env.TWILIO_NUMBER,
             to: phoneNumber,
-            statusCallback: `https://tc-communication-service.onrender.com/webhooks/sms?proactiveId=${proactiveId}`, // Your webhook URL
+            statusCallback: `https://tc-communication-service.onrender.com-1/webhooks/sms?proactiveId=${proactiveId}`, // Your webhook URL
             statusCallbackMethod: 'POST'
         });
 

@@ -256,6 +256,8 @@ const sendSMS = async (data) => {
 
             console.log("❌ No SMS template found.");
             await scheduleNextStep(unitId);
+            console.log("Scheduled Next Step.");
+
 
             return false;
         }
@@ -284,8 +286,9 @@ const sendSMS = async (data) => {
         });
 
         if (!twilioResponse) {
+            console.log("Scheduled Next Step.");
             await scheduleNextStep(unitId);
-
+            console.log("❌ Error sending SMS.");
             return false;
         }
 

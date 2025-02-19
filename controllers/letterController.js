@@ -110,7 +110,7 @@ const sendLetterToOsg = async (certified = 0, processorId, pathtofile) => {
         }
         form.append('product', product);
 
-        form.append('file', fs.createReadStream(path.join(__dirname, '..', 'tempLetter.zip')), 'tempLetter.zip');
+        form.append('file', fs.createReadStream(path.join(__dirname, '..', 'disk', 'tempLetter.zip')), 'tempLetter.zip');
 
 
 

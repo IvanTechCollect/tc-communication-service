@@ -296,6 +296,8 @@ const sendSMS = async (data) => {
         console.log('SMS SENT');
 
 
+        await scheduleNextStep(unitId);
+        console.log("Scheduled Next Step.");
         return true;
 
     } catch (error) {

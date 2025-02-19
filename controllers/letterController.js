@@ -119,50 +119,54 @@ const sendLetterToOsg = async (certified = 0, processorId) => {
 
         console.log("✅ File exists, size:", stats.size, "bytes");
 
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.on('error', (err) => {
-            console.error("❌ File Stream Error:", err);
-        });
-        fileStream.on('open', async () => {
-            console.log("✅ File Stream Opened Successfully");
+        // ✅ Use a Promise to wait for the file to open
+        return new Promise((resolve, reject) => {
+            const fileStream = fs.createReadStream(filePath);
 
-            form.append('file', fileStream, {
-                filename: 'invoicezipfile.zip',
-                contentType: 'application/zip',
+            fileStream.on('error', (err) => {
+                console.error("❌ File Stream Error:", err);
+                reject([false, err.message]); // Reject if file fails to open
             });
 
+            fileStream.on('open', async () => {
+                console.log("✅ File Stream Opened Successfully");
 
-            const username = process.env.OSG_USERNAME;
-            const password = process.env.OSG_PWD;
-
-            const authString = Buffer.from(`${username}:${password}`).toString('base64');
-
-            const headers = {
-                ...form.getHeaders(),
-                'Authorization': `Basic ${authString}`,
-            };
-
-            console.log("🔍 Sending request with headers:", headers);
-
-            try {
-                const response = await axios.post('https://orders.optimaloutsource.com/rest/api/1/order/new/', form, {
-                    headers: headers,
-                    maxBodyLength: Infinity,
+                form.append('file', fileStream, {
+                    filename: 'invoicezipfile.zip',
+                    contentType: 'application/zip',
                 });
 
-                console.log("✅ Response:", response.data);
-                return [true, response.data];
+                const username = process.env.OSG_USERNAME;
+                const password = process.env.OSG_PWD;
+                const authString = Buffer.from(`${username}:${password}`).toString('base64');
 
-            } catch (error) {
-                console.error("❌ Axios Error:", error.response ? error.response.data : error.message);
-                return [false, error.response ? error.response.data : error.message];
-            }
+                const headers = {
+                    ...form.getHeaders(),
+                    'Authorization': `Basic ${authString}`,
+                };
+
+                try {
+                    const response = await axios.post('https://orders.optimaloutsource.com/rest/api/1/order/new/', form, {
+                        headers: headers,
+                        maxBodyLength: Infinity,
+                    });
+
+                    console.log("✅ Response:", response.data);
+                    resolve([true, response.data]); // ✅ Correctly return response data
+
+                } catch (error) {
+                    console.error("❌ Axios Error:", error.response ? error.response.data : error.message);
+                    resolve([false, error.response ? error.response.data : error.message]); // Always return an array
+                }
+            });
         });
+
     } catch (error) {
         console.error("❌ Unexpected Error:", error.message);
         return [false, error.message];
     }
 };
+
 
 
 

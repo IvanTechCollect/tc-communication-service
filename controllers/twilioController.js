@@ -253,6 +253,10 @@ const sendSMS = async (data) => {
 
         if (!foundTemplate) {
 
+
+            console.log("❌ No SMS template found.");
+            await scheduleNextStep(unitId);
+
             return false;
         }
 

@@ -138,7 +138,7 @@ const sendLetterToOsg = async (certified = 0, processorId, pathtofile) => {
             return [false];
         }
     } catch (error) {
-        console.error(error?.response.data);
+        console.error(error);
         return [false];
     }
 

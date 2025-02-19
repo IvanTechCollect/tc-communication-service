@@ -162,6 +162,7 @@ const letterJobFunction = async (job) => {
         }).where('id', proactiveId);
 
 
+        console.log(fileName);
 
         await scheduleNextStep(foundUnit.id);
 
@@ -176,7 +177,6 @@ const letterJobFunction = async (job) => {
 
         console.log(error);
         console.log('Scheduled Next Step');
-
 
         return false;
     }

@@ -1,6 +1,7 @@
 const fsPromises = require('fs').promises;
 const htmlPdf = require('html-pdf-node');
 const pdfParse = require('pdf-parse');
+const puppeteer = require('puppeteer');
 
 // Convert PDF to base64-encoded string
 const convertPdfToBlob = async (filePath) => {
@@ -13,21 +14,29 @@ const convertPdfToBlob = async (filePath) => {
         return false; // return false on error
     }
 };
-
-// Convert HTML to a text file (without base64 encoding)
 async function convertHtmlToPdfFile(htmlContent, returnNumPages = null) {
-    const options = { format: 'Letter' }; // Specify PDF options
-    const file = { content: htmlContent };
-
     try {
-        // Generate PDF and wait for it to complete
-        const pdfBuffer = await htmlPdf.generatePdf(file, options);
-        // Save the PDF to the output file path
+        // Launch Puppeteer instance (Docker-friendly settings)
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox'], // Required for Docker & server environments
+            headless: true,
+        });
+
+        const page = await browser.newPage();
+        await page.setContent(htmlContent, { waitUntil: 'networkidle2' });
+
+        // Generate PDF
+        const pdfBuffer = Buffer.from(await page.pdf({
+            format: 'Letter',
+            printBackground: true,
+        }));
+
+
+        await browser.close();
 
         if (returnNumPages) {
             const pdfMetadata = await pdfParse(pdfBuffer);
-            const numPages = pdfMetadata.numpages;
-            return { pdfBuffer, numPages };
+            return { pdfBuffer, numPages: pdfMetadata.numpages };
         }
 
         return pdfBuffer;
@@ -37,5 +46,12 @@ async function convertHtmlToPdfFile(htmlContent, returnNumPages = null) {
         return false;
     }
 }
+
+// Convert HTML to a text file (without base64 encoding)
+
+
+
+module.exports = { convertHtmlToPdfFile };
+
 
 module.exports = { convertPdfToBlob, convertHtmlToPdfFile };

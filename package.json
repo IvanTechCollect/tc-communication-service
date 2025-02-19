@@ -18,6 +18,7 @@
     "archiver": "^7.0.1",
     "axios": "^1.7.9",
     "bull": "^4.16.4",
+    "chrome-aws-lambda": "^10.1.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
@@ -36,6 +37,8 @@
     "objection": "^3.1.5",
     "openai": "^4.82.0",
     "pdf-parse": "^1.1.1",
+    "puppeteer": "^24.2.1",
+    "puppeteer-core": "^10.4.0",
     "redis": "^4.7.0",
     "twilio": "^5.4.3",
     "uuid": "^11.0.5"

@@ -131,6 +131,10 @@ const sendLetterToOsg = async (certified = 0, processorId) => {
                 contentType: 'application/zip',
             });
 
+
+            const username = process.env.OSG_USERNAME;
+            const password = process.env.OSG_PWD;
+
             const authString = Buffer.from(`${username}:${password}`).toString('base64');
 
             const headers = {

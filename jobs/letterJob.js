@@ -215,4 +215,4 @@ letterQueue.on('failed', async (job, err) => {
 
 
 
-module.exports = { addLetterToQueue };
+module.exports = { addLetterToQueue, letterQueue };

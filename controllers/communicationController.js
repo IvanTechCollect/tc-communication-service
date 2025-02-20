@@ -12,75 +12,74 @@ const { getAzureFileSAS } = require('./azureController');
 require('dotenv').config();
 
 
+const emailQueue = new Queue("sendEmailQueue", redisUrl);
+const letterQueue = new Queue("sendLetterQueue", redisUrl);
+const callQueue = new Queue("sendCallQueue", redisUrl);
+const smsQueue = new Queue("sendSmsQueue", redisUrl);
+
+const areAllQueuesEmpty = async () => {
+    const activeEmail = await emailQueue.getActiveCount();
+    const activeLetter = await letterQueue.getActiveCount();
+    const activeCall = await callQueue.getActiveCount();
+    const activeSMS = await smsQueue.getActiveCount();
+
+    return (activeEmail + activeLetter + activeCall + activeSMS) === 0;
+};
+
+const waitForAllQueuesToBeEmpty = async () => {
+    while (!(await areAllQueuesEmpty())) {
+        console.log(`Waiting for all communication jobs to finish...`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+    }
+};
+
+// Send Email (Only starts if all queues are empty)
 const sendCommunicationEmail = async (req, res) => {
-
-
     try {
         const { unitId, proactiveId } = req.body;
-
-
-        // Check required fields
         if (!unitId || !proactiveId) {
-            return res.status(400).json({ error: 'Missing required fields:  unitId, proactiveId.' });
+            return res.status(400).json({ error: 'Missing required fields: unitId, proactiveId.' });
         }
 
         res.status(200).json({ success: true, message: 'Email is queued for sending.' });
 
-        // Add the email job to the queue
-        const jobData = { unitId, proactiveId };
-
-        const result = await addEmailToQueue(jobData);
-        console.log('Queue Result: ', result);
-
-
-
-
+        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+        const result = await emailQueue.add({ unitId, proactiveId });
+        console.log('Queue Result:', result);
     } catch (error) {
         console.error('Error queuing email job:', error);
     }
+};
 
-}
-
+// Send Letter (Only starts if all queues are empty)
 const sendCommunicationLetter = async (req, res) => {
-
     const { unitId, proactiveId } = req.body;
-
     res.sendStatus(200);
 
-    const result = await addLetterToQueue({ unitId, proactiveId });
-    console.log('Queue Result: ', result);
+    await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+    const result = await letterQueue.add({ unitId, proactiveId });
+    console.log('Queue Result:', result);
+};
 
-
-
-
-}
-
-
+// Send Call (Only starts if all queues are empty)
 const sendCommunicationCall = async (req, res) => {
-
     res.sendStatus(200);
-
     const data = req.body;
 
-    const result = await addCallToQueue(data);
+    await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+    const result = await callQueue.add(data);
+    console.log('Queue Result:', result);
+};
 
-    console.log('Queue Result: ', result);
-
-
-}
-
-
+// Send SMS (Only starts if all queues are empty)
 const sendCommunicationSMS = async (req, res) => {
-
-
     res.sendStatus(200);
-
     const data = req.body;
 
-    const result = await addSmsToQueue(data);
-
-    console.log('Queue Result: ', result);
-}
+    await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+    const result = await smsQueue.add(data);
+    console.log('Queue Result:', result);
+};
 
 const getCommunicationLetterSAS = async (req, res) => {
 

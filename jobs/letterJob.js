@@ -182,8 +182,13 @@ const letterJobFunction = async (job) => {
 const letterQueue = new Queue("sendLetterQueue", redisUrl);
 
 letterQueue.process(async (job) => {
-    const result = await letterJobFunction(job);
-    return result; // Make sure result is returned from the processing job
+    try {
+        const result = await letterJobFunction(job);
+        return result;// Pass the job to the emailJobFunction
+    } catch (err) {
+        console.error(`Error processing job ${job.id}:`, err);
+        throw err; // This will trigger retries
+    }
 });
 
 const addLetterToQueue = async (letterData) => {

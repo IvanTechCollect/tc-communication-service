@@ -181,7 +181,7 @@ const emailJobFunction = async (job) => {
             priority: 'High',
             created_at: new Date()
         })
-
+        throw error;
         return false
     }
 };
@@ -190,8 +190,14 @@ const emailJobFunction = async (job) => {
 const emailQueue = new Queue('sendEmailQueue', redisUrL);
 
 emailQueue.process(async (job) => {
-    const result = await emailJobFunction(job);
-    return result;// Pass the job to the emailJobFunction
+    try {
+        const result = await emailJobFunction(job);
+        return result;// Pass the job to the emailJobFunction
+    } catch (err) {
+        console.error(`Error processing job ${job.id}:`, err);
+        throw err; // This will trigger retries
+    }
+
 });
 
 // Add email job to the queue with retry and backoff logic

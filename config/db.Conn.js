@@ -3,20 +3,24 @@ const { Model } = require('objection');
 const Knex = require('knex');
 
 const connectToDB = () => {
-    const env = process.env.DB_ENV;
-    const host = env === 'LOCAL' ? process.env.DB_HOST_OFFICE : process.env.DB_HOST_PROD;
-    const databaseName = env === 'LOCAL' ? process.env.DB_DATABASE_LOCAL : process.env.DB_DATABASE;
+
+    const databaseUrl = process.env.DB_ENB == 'PROD' ? process.env.DB_HOST_OFFICE : process.env.DB_HOST_PROD;
+
+    if (!databaseUrl) {
+        console.error('DATABASE_URL is not set in environment variables.');
+        process.exit(1);
+    }
+
+    const db = process.env.DB_DATABASE;
+    const user = process.env.DB_USERNAME;
+    const pwd = process.env.DB_PASSWORD;
+
+
+    const connectionString = `mysql://${user}:${pwd}@${databaseUrl}:3306/${db}`;
 
     const knex = Knex({
         client: 'mysql2',
-        connection: {
-            host,
-            port: process.env.DB_PORT || 3306,
-            user: process.env.DB_USERNAME,
-            password: process.env.DB_PASSWORD,
-            database: databaseName,
-            connectTimeout: 30000, // Increased timeout to prevent connection issues
-        },
+        connection: connectionString,
         pool: {
             min: 2,
             max: 10,
@@ -35,12 +39,14 @@ const connectToDB = () => {
         })
         .catch((err) => {
             console.error('Database connection error:', err);
+            process.exit(1);
         });
 
-    knex.on('error', (err) => {
+    knex.on('error', async (err) => {
         console.error('Knex error:', err);
         if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST') {
             console.log('Reconnecting to MySQL...');
+            await knex.destroy();
             connectToDB();
         }
     });

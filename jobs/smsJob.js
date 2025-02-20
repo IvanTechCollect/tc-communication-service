@@ -8,16 +8,15 @@ smsQueue.process(async (job) => {
     try {
         console.log(`Processing SMS Job ID: ${job.id}`, job.data);
 
-        const { result, error } = await sendSMS(job.data); // Get result object
-        console.log(`SMS Job ID: ${job.id} - Result:`, result);
+        const smsResult = await sendSMS(job.data); // Get full response object
+        console.log(`SMS Job ID: ${job.id} - Result:`, smsResult);
 
-        if (!result) {
-            console.error(`SMS Job ID: ${job.id} - Failed:`, error);
-            throw new Error(error || "Unknown SMS error"); // Trigger retry
+        if (!smsResult.result) {
+            console.error(`SMS Job ID: ${job.id} - Failed:`, smsResult.error);
+            throw new Error(smsResult.error || "Unknown SMS error"); // Trigger retry
         }
 
-        return { success: true, jobId: job.id, message: "SMS sent successfully." };
-
+        return smsResult; // Return full response object
     } catch (err) {
         console.error(`Error processing SMS Job ${job.id}:`, err);
         throw err; // This will trigger retries
@@ -37,6 +36,7 @@ const addSmsToQueue = async (smsData) => {
         });
 
         const result = await job.finished();
+        console.log('JOB FINISHED RESULT', result);
         return result; // Return structured result
 
     } catch (error) {
@@ -44,6 +44,13 @@ const addSmsToQueue = async (smsData) => {
         return { result: false, error: "Failed to add job to queue." };
     }
 };
+
+smsQueue.on('completed', async (job, result) => {
+
+    console.log(`SMS Job ID: ${job.id} completed:`, result);
+    console.log("Job Data:", job.data);
+
+});
 
 smsQueue.on('failed', async (job, err) => {
     console.error(`SMS Job ID: ${job.id} failed:`, err.message);

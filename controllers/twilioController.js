@@ -292,6 +292,8 @@ const sendSMS = async (data) => {
         return { result: true, error: null };
 
     } catch (error) {
+        return { result: false, error: error.message };
+
         await ProactiveRoadmap.query().where('id', proactiveId).update({ activity_sent_date: new Date(), status: -1 });
         await scheduleNextStep(unitId);
 
@@ -313,7 +315,6 @@ const sendSMS = async (data) => {
 
         console.log("Scheduled Next Step.");
 
-        return { result: false, error: error.message };
     }
 };
 

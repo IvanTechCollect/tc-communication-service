@@ -1,6 +1,6 @@
 // communication controller.j
 const { addCallToQueue } = require('../jobs/callJob');
-const { emailQueue, addEmailToQueue } = require('../jobs/emailJob');
+const { addEmailToQueue } = require('../jobs/emailJob');
 const { addLetterToQueue } = require('../jobs/letterJob');
 const { addSmsToQueue } = require('../jobs/smsJob');
 const CommunicationHandling = require('../models/CommunicationHandling');

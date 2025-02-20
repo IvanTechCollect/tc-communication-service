@@ -113,7 +113,28 @@ const runNextStep = async (req, res) => {
     } catch (error) {
 
         console.log('Error Queueing Step');
-        console.log(error);
+
+        if (error.code === 'ECONNRESET' || error.code === 'PROTOCOL_CONNECTION_LOST') {
+            console.error('Database connection lost. Reconnecting...');
+
+            // Reset MySQL Connection
+            try {
+                await global.knex.destroy(); // Destroy old connection
+                global.knex = require('../config/dbConn')(); // Reconnect
+                console.log('Database connection reset successfully.');
+
+                return res.status(200).json({ success: true, message: 'Next step is queued for sending.' });
+
+            } catch (reconnectError) {
+                console.error('Failed to reconnect to MySQL:', reconnectError);
+                return res.status(500).json({ error: 'Failed to reconnect to MySQL.' });
+            }
+        }
+
+        return res.status(500).json({ error: 'Internal Server Error' });
+
+
+
 
 
     }

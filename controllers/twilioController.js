@@ -36,7 +36,7 @@ const checkPhoneNumber = async (phoneNumber) => {
 const makeCall = async (data) => {
 
     const { proactiveId, unitId } = data;
-
+    console.log(data);
 
     try {
 
@@ -69,6 +69,9 @@ const makeCall = async (data) => {
 
         if (!foundTemplate) {
 
+            console.log("❌ No Call template found.");
+            await scheduleNextStep(unitId);
+            console.log("Scheduled Next Step.");
             return false;
         }
 

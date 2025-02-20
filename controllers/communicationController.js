@@ -40,80 +40,21 @@ const waitForAllQueuesToBeEmpty = async () => {
 
 const runNextStep = async (req, res) => {
 
+    let retries = 0;
+    const { unitId, proactiveId } = req.body;
 
     try {
         const { unitId, proactiveId } = req.body;
 
-        const foundComunication = await ProactiveRoadmap.query().where('id', proactiveId).first();
-
-        if (!foundComunication) {
-
-            return res.status(404).json({ error: 'Proactive Communication not found.' });
-
-        }
-
         res.status(200).json({ success: true, message: 'Next step is queued for sending.' });
 
-
-        const type = foundComunication.communication;
-
-        if (type === 'Call') {
-
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            console.log('Queue Empty');
-            const result = await addCallToQueue({ unitId, proactiveId });
-            console.log('Call Queue Result:', result);
-
-            return;
-        }
-
-        if (type === 'Email') {
-
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            console.log('Queue Empty');
-            const result = await addEmailToQueue({ unitId, proactiveId });
-            console.log('Email Queue Result:', result);
-
-            return;
-        }
-
-        if (type === 'Letter') {
-
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            const result = await addLetterToQueue({ unitId, proactiveId });
-            console.log('Letter Queue Result:', result);
-
-            return;
-        }
-
-        if (type === 'SMS') {
-
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            console.log('Queue Empty');
-            const result = await addSmsToQueue({ unitId, proactiveId });
-            console.log('SMS Queue Result:', result);
-
-            return;
-        }
-
-        if (type === 'Call & Letter') {
-
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            console.log('Queue Empty');
-            await addCallToQueue({ unitId, proactiveId });
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            console.log('Queue Empty');
-            await addLetterToQueue({ unitId, proactiveId });
-            return;
-        }
-
-
+        await handleRunNextStep(unitId, proactiveId);
 
 
     } catch (error) {
 
         console.log('Error Queueing Step');
-
+        console.log(error);
         if (error.code === 'ECONNRESET' || error.code === 'PROTOCOL_CONNECTION_LOST') {
             console.error('Database connection lost. Reconnecting...');
 
@@ -123,15 +64,21 @@ const runNextStep = async (req, res) => {
                 global.knex = require('../config/dbConn')(); // Reconnect
                 console.log('Database connection reset successfully.');
 
-                return res.status(200).json({ success: true, message: 'Next step is queued for sending.' });
+                if (retries < 3) {
+                    retries++;
+                    await handleRunNextStep(unitId, proactiveId);
+
+                } else {
+                    return;
+                }
+
+
 
             } catch (reconnectError) {
                 console.error('Failed to reconnect to MySQL:', reconnectError);
-                return res.status(500).json({ error: 'Failed to reconnect to MySQL.' });
+                return;
             }
         }
-
-        return res.status(500).json({ error: 'Internal Server Error' });
 
 
 
@@ -140,6 +87,69 @@ const runNextStep = async (req, res) => {
     }
 
 
+
+}
+
+const handleRunNextStep = async (unitId, proactiveId) => {
+
+
+    const foundComunication = await ProactiveRoadmap.query().where('id', proactiveId).first();
+
+    if (!foundComunication) {
+
+        return res.status(404).json({ error: 'Proactive Communication not found.' });
+
+    }
+
+
+
+    const type = foundComunication.communication;
+
+    if (type === 'Call') {
+
+        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+        console.log('Queue Empty');
+        const result = await addCallToQueue({ unitId, proactiveId });
+        console.log('Call Queue Result:', result);
+
+    }
+
+    if (type === 'Email') {
+
+        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+        console.log('Queue Empty');
+        const result = await addEmailToQueue({ unitId, proactiveId });
+        console.log('Email Queue Result:', result);
+
+    }
+
+    if (type === 'Letter') {
+
+        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+        const result = await addLetterToQueue({ unitId, proactiveId });
+        console.log('Letter Queue Result:', result);
+
+    }
+
+    if (type === 'SMS') {
+
+        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+        console.log('Queue Empty');
+        const result = await addSmsToQueue({ unitId, proactiveId });
+        console.log('SMS Queue Result:', result);
+
+
+    }
+
+    if (type === 'Call & Letter') {
+
+        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+        console.log('Queue Empty');
+        await addCallToQueue({ unitId, proactiveId });
+        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+        console.log('Queue Empty');
+        await addLetterToQueue({ unitId, proactiveId });
+    }
 
 }
 

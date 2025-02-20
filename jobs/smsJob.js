@@ -6,6 +6,7 @@ const smsQueue = new Queue('sendSmsQueue', redisUrl);
 
 smsQueue.process(async (job) => {
     try {
+        console.log(job.data);
         const result = await sendSMS(job.data);
         return result;// Pass the job to the emailJobFunction
     } catch (err) {

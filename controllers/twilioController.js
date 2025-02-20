@@ -54,7 +54,7 @@ const makeCall = async (data) => {
         if (!isValid) {
 
             console.log("❌ Invalid phone number.");
-            throw new Error("❌ Invalid phone number.");
+            return false;
 
         }
 
@@ -227,6 +227,7 @@ const forwardCallToClient = async (data) => {
 
 const sendSMS = async (data) => {
     const { proactiveId, unitId } = data;
+    console.log(data);
 
     try {
 
@@ -237,6 +238,7 @@ const sendSMS = async (data) => {
         const preferredLanguage = foundUnit.preferred_language;
         const phoneNumber = foundUnit.phone;
 
+
         const isValid = await checkPhoneNumber(phoneNumber);
 
         if (!isValid) {
@@ -245,7 +247,6 @@ const sendSMS = async (data) => {
             throw new Error("❌ Invalid phone number.");
 
         }
-        console.clear();
         console.log("✅ The phone number is valid!");
 
         const foundTimelineStep = await ProactiveRoadmap.query().where('id', proactiveId).first();

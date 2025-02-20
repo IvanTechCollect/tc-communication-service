@@ -19,8 +19,8 @@ require('dotenv').config();
 
 const emailJobFunction = async (job) => {
 
+    console.log(job.data);
     const { unitId, proactiveId } = job.data;  // Access job data correctly
-
     try {
 
 

@@ -112,7 +112,8 @@ const runNextStep = async (req, res) => {
 
     } catch (error) {
 
-        return res.status(500).json({ error: 'Error queuing next step.' });
+        console.log('Error Queueing Step');
+        console.log(error);
 
 
     }

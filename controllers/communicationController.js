@@ -48,7 +48,7 @@ const sendCommunicationEmail = async (req, res) => {
         res.status(200).json({ success: true, message: 'Email is queued for sending.' });
 
         await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-        const result = await addEmailToQueue(unitId, proactiveId);
+        const result = await addEmailToQueue({ unitId, proactiveId });
         console.log('Queue Result:', result);
     } catch (error) {
         console.error('Error queuing email job:', error);
@@ -61,7 +61,7 @@ const sendCommunicationLetter = async (req, res) => {
     res.sendStatus(200);
 
     await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-    const result = await addLetterToQueue(unitId, proactiveId);
+    const result = await addLetterToQueue({ unitId, proactiveId });
     console.log('Queue Result:', result);
 };
 

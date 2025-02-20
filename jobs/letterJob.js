@@ -170,9 +170,7 @@ const letterJobFunction = async (job) => {
 
         await ProactiveRoadmap.query().where('id', proactiveId).update({ 'status': -1, });
 
-        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
-
-        await scheduleNextStep(updatedRoadmap.unit_id);
+        await scheduleNextStep(unitId);
 
         console.log(error);
         console.log('Scheduled Next Step');

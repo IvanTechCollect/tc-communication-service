@@ -129,10 +129,9 @@ const emailJobFunction = async (job) => {
 
             await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, activity_sent_date: new Date() });
 
-            const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
 
 
-            await scheduleNextStep(updatedRoadmap.unit_id)
+            await scheduleNextStep(unitId)
 
             await CommunicationHandling.query().insert({
                 proactive_id: proactiveId,
@@ -166,16 +165,13 @@ const emailJobFunction = async (job) => {
             .where('id', proactiveId)
             .update({ status: -1, activity_sent_date: new Date() });
 
-        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
 
-
-
-        await scheduleNextStep(updatedRoadmap.unit_id)
+        await scheduleNextStep(unitId)
 
         await CommunicationHandling.query().insert({
             proactive_id: proactiveId,
             communication_type: 'Email',
-            unit_id: updatedRoadmap.unit_id,
+            unit_id: unitId,
             result: -1,
             communication_webhook_id: '',
             reason: 'Internal Server Error.',

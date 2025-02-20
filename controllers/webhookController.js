@@ -50,7 +50,6 @@ const handleCommunicationWebhooks = async (event, emailId, proactiveId, reason, 
         result = 1;
         shouldRecordResponse = true;
         await ProactiveRoadmap.query().update({ status: 1, }).where('id', proactiveId);
-        const updatedRoadmap = await ProactiveRoadmap.query().findById(proactiveId);
         result = 1;
     } else if (event === 'dropped' || event === 'failed') {
         commStatus = 'Failed';

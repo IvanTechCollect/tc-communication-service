@@ -37,6 +37,90 @@ const waitForAllQueuesToBeEmpty = async () => {
     }
 };
 
+
+const runNextStep = async (req, res) => {
+
+
+    try {
+        const { unitId, proactiveId } = req.body;
+
+        const foundComunication = await ProactiveRoadmap.query().where('id', proactiveId).first();
+
+        if (!foundComunication) {
+
+            return res.status(404).json({ error: 'Proactive Communication not found.' });
+
+        }
+
+        res.status(200).json({ success: true, message: 'Next step is queued for sending.' });
+
+
+        const type = foundComunication.communication;
+
+        if (type === 'Call') {
+
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            console.log('Queue Empty');
+            const result = await addCallToQueue({ unitId, proactiveId });
+            console.log('Call Queue Result:', result);
+
+            return;
+        }
+
+        if (type === 'Email') {
+
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            console.log('Queue Empty');
+            const result = await addEmailToQueue({ unitId, proactiveId });
+            console.log('Email Queue Result:', result);
+
+            return;
+        }
+
+        if (type === 'Letter') {
+
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            const result = await addLetterToQueue({ unitId, proactiveId });
+            console.log('Letter Queue Result:', result);
+
+            return;
+        }
+
+        if (type === 'SMS') {
+
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            console.log('Queue Empty');
+            const result = await addSmsToQueue({ unitId, proactiveId });
+            console.log('SMS Queue Result:', result);
+
+            return;
+        }
+
+        if (type === 'Call & Letter') {
+
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            console.log('Queue Empty');
+            await addCallToQueue({ unitId, proactiveId });
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            console.log('Queue Empty');
+            await addLetterToQueue({ unitId, proactiveId });
+            return;
+        }
+
+
+
+
+    } catch (error) {
+
+        return res.status(500).json({ error: 'Error queuing next step.' });
+
+
+    }
+
+
+
+}
+
 // Send Email (Only starts if all queues are empty)
 const sendCommunicationEmail = async (req, res) => {
     try {
@@ -141,4 +225,4 @@ const getCommunicationLetterSAS = async (req, res) => {
 
 
 
-module.exports = { sendCommunicationEmail, sendCommunicationLetter, sendCommunicationCall, sendCommunicationSMS, getCommunicationLetterSAS }    
+module.exports = { sendCommunicationEmail, sendCommunicationLetter, sendCommunicationCall, sendCommunicationSMS, getCommunicationLetterSAS, runNextStep }    

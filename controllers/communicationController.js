@@ -128,7 +128,8 @@ const handleRunNextStep = async (unitId, proactiveId) => {
             await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
             console.log('Queue Empty');
             const result = await addSmsToQueue({ unitId, proactiveId });
-            console.log('SMS Queue Result:', result);
+            console.log('SMS Queue Result:');
+            console.log(result);
 
 
         }

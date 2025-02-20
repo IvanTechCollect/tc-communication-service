@@ -230,54 +230,37 @@ const sendSMS = async (data) => {
     console.log(data);
 
     try {
-
-
         const foundUnit = await Unit.query().where('id', unitId).first();
         const communityId = foundUnit.community;
         const companyId = foundUnit.company_id;
         const preferredLanguage = foundUnit.preferred_language;
         const phoneNumber = foundUnit.phone;
 
-
         const isValid = await checkPhoneNumber(phoneNumber);
-
         if (!isValid) {
             await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
-
             throw new Error("❌ Invalid phone number.");
-
         }
         console.log("✅ The phone number is valid!");
 
         const foundTimelineStep = await ProactiveRoadmap.query().where('id', proactiveId).first();
-
         const ruleId = foundTimelineStep.rule_id;
 
         const foundTemplate = await extractTemplate('SMS', ruleId, communityId, companyId);
-
         if (!foundTemplate) {
-
-
             console.log("❌ No SMS template found.");
             await scheduleNextStep(unitId);
             console.log("Scheduled Next Step.");
-
-
-            return false;
+            return { result: false, error: "No SMS template found." };
         }
 
         let content = htmlToString(foundTemplate);
-
-
         const formattedTemplateData = await applyDataToTemplate(unitId, content);
-
         content = formattedTemplateData.content;
 
         if (preferredLanguage !== 'en') {
-
             const { translateToDifferentLanguage } = await import('./aiController.mjs');
             console.log('Using AI to translate');
-
             content = await translateToDifferentLanguage(content, preferredLanguage);
         }
 
@@ -285,7 +268,7 @@ const sendSMS = async (data) => {
             body: content,
             from: process.env.TWILIO_NUMBER,
             to: phoneNumber,
-            statusCallback: `https://tc-communication-service-1.onrender.com/webhooks/sms?proactiveId=${proactiveId}`, // Your webhook URL
+            statusCallback: `https://tc-communication-service-1.onrender.com/webhooks/sms?proactiveId=${proactiveId}`,
             statusCallbackMethod: 'POST'
         });
 
@@ -293,30 +276,30 @@ const sendSMS = async (data) => {
             console.log("Scheduled Next Step.");
             await scheduleNextStep(unitId);
             console.log("❌ Error sending SMS.");
-            return false;
+            return { result: false, error: "Twilio API response was empty." };
         }
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ sent_text_data: content, activity_sent_date: new Date(), status: 2 });
-        console.log('SMS SENT');
-
+        await ProactiveRoadmap.query().where('id', proactiveId).update({
+            sent_text_data: content,
+            activity_sent_date: new Date(),
+            status: 2
+        });
+        console.log('✅ SMS SENT');
 
         await scheduleNextStep(unitId);
         console.log("Scheduled Next Step.");
-        return true;
+
+        return { result: true, error: null };
 
     } catch (error) {
-
-
-
         await ProactiveRoadmap.query().where('id', proactiveId).update({ activity_sent_date: new Date(), status: -1 });
-
         await scheduleNextStep(unitId);
 
-        console.log("❌ Error sending sms:", error.message);
+        console.log("❌ Error sending SMS:", error.message);
 
         await CommunicationHandling.query().insert({
             proactive_id: proactiveId,
-            communication_type: 'Call',
+            communication_type: 'SMS',
             unit_id: unitId,
             result: -1,
             communication_webhook_id: '',
@@ -329,14 +312,11 @@ const sendSMS = async (data) => {
         });
 
         console.log("Scheduled Next Step.");
-        throw error;
 
-
-        return false;
+        return { result: false, error: error.message };
     }
+};
 
-
-}
 
 
 module.exports = { makeCall, checkPhoneNumber, forwardCallToClient, sendSMS };

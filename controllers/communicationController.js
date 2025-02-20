@@ -9,7 +9,11 @@ const Company = require('../models/Company');
 const ProactiveRoadmap = require('../models/ProactiveRoadmap');
 const Unit = require('../models/Unit');
 const { getAzureFileSAS } = require('./azureController');
+
 require('dotenv').config();
+
+const Queue = require('bull');
+const redisUrl = process.env.REDIS_URL;
 
 
 const emailQueue = new Queue("sendEmailQueue", redisUrl);
@@ -44,7 +48,7 @@ const sendCommunicationEmail = async (req, res) => {
         res.status(200).json({ success: true, message: 'Email is queued for sending.' });
 
         await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-        const result = await emailQueue.add({ unitId, proactiveId });
+        const result = await addEmailToQueue(unitId, proactiveId);
         console.log('Queue Result:', result);
     } catch (error) {
         console.error('Error queuing email job:', error);
@@ -57,7 +61,7 @@ const sendCommunicationLetter = async (req, res) => {
     res.sendStatus(200);
 
     await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-    const result = await letterQueue.add({ unitId, proactiveId });
+    const result = await addLetterToQueue(unitId, proactiveId);
     console.log('Queue Result:', result);
 };
 
@@ -67,7 +71,7 @@ const sendCommunicationCall = async (req, res) => {
     const data = req.body;
 
     await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-    const result = await callQueue.add(data);
+    const result = await addCallToQueue(data);
     console.log('Queue Result:', result);
 };
 
@@ -77,7 +81,7 @@ const sendCommunicationSMS = async (req, res) => {
     const data = req.body;
 
     await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-    const result = await smsQueue.add(data);
+    const result = await addSmsToQueue(data);
     console.log('Queue Result:', result);
 };
 

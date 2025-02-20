@@ -28,9 +28,9 @@ const connectToDB = () => {
         pool: {
             min: 2,
             max: 10,
-            acquireTimeoutMillis: 30000,
-            idleTimeoutMillis: 30000,
-            reapIntervalMillis: 5000,
+            acquireTimeoutMillis: 60000, // ⬆ Increase timeout to acquire a connection (60 sec)
+            idleTimeoutMillis: 600000,   // ⬆ Keep idle connections open for 10 minutes (600 sec)
+            reapIntervalMillis: 60000,   // ⬆ Check for idle connections every 60 sec instead of 5 sec
         },
         debug: false,
     });

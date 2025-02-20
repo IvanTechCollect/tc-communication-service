@@ -92,64 +92,61 @@ const runNextStep = async (req, res) => {
 
 const handleRunNextStep = async (unitId, proactiveId) => {
 
+    try {
+        const foundComunication = await ProactiveRoadmap.query().where('id', proactiveId).first();
 
-    const foundComunication = await ProactiveRoadmap.query().where('id', proactiveId).first();
+        const type = foundComunication.communication;
 
-    if (!foundComunication) {
+        if (type === 'Call') {
 
-        return res.status(404).json({ error: 'Proactive Communication not found.' });
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            console.log('Queue Empty');
+            const result = await addCallToQueue({ unitId, proactiveId });
+            console.log('Call Queue Result:', result);
 
+        }
+
+        if (type === 'Email') {
+
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            console.log('Queue Empty');
+            const result = await addEmailToQueue({ unitId, proactiveId });
+            console.log('Email Queue Result:', result);
+
+        }
+
+        if (type === 'Letter') {
+
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            const result = await addLetterToQueue({ unitId, proactiveId });
+            console.log('Letter Queue Result:', result);
+
+        }
+
+        if (type === 'SMS') {
+
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            console.log('Queue Empty');
+            const result = await addSmsToQueue({ unitId, proactiveId });
+            console.log('SMS Queue Result:', result);
+
+
+        }
+
+        if (type === 'Call & Letter') {
+
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            console.log('Queue Empty');
+            await addCallToQueue({ unitId, proactiveId });
+            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
+            console.log('Queue Empty');
+            await addLetterToQueue({ unitId, proactiveId });
+        }
+    } catch (error) {
+
+        throw error;
     }
 
-
-
-    const type = foundComunication.communication;
-
-    if (type === 'Call') {
-
-        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-        console.log('Queue Empty');
-        const result = await addCallToQueue({ unitId, proactiveId });
-        console.log('Call Queue Result:', result);
-
-    }
-
-    if (type === 'Email') {
-
-        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-        console.log('Queue Empty');
-        const result = await addEmailToQueue({ unitId, proactiveId });
-        console.log('Email Queue Result:', result);
-
-    }
-
-    if (type === 'Letter') {
-
-        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-        const result = await addLetterToQueue({ unitId, proactiveId });
-        console.log('Letter Queue Result:', result);
-
-    }
-
-    if (type === 'SMS') {
-
-        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-        console.log('Queue Empty');
-        const result = await addSmsToQueue({ unitId, proactiveId });
-        console.log('SMS Queue Result:', result);
-
-
-    }
-
-    if (type === 'Call & Letter') {
-
-        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-        console.log('Queue Empty');
-        await addCallToQueue({ unitId, proactiveId });
-        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-        console.log('Queue Empty');
-        await addLetterToQueue({ unitId, proactiveId });
-    }
 
 }
 

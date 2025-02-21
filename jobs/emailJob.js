@@ -4,12 +4,10 @@ const { applyDataToTemplate } = require("../controllers/dataController");
 const { sendEmail } = require("../controllers/emailController");
 const { createLog } = require("../controllers/logController");
 const { v4: uuidv4 } = require('uuid');
-const Queue = require('bull');
-const redisUrL = require('../config/redisConfig');
 const Unit = require("../models/Unit");
 const { extractTemplate } = require("../controllers/templateController");
 const Company = require("../models/Company");
-const { prepareHTMLForTranslation, restoreBlobURLs, restoreBase64Images } = require("../helpers/helpers");
+const { prepareHTMLForTranslation, restoreBase64Images } = require("../helpers/helpers");
 const { generateLedgerHtml } = require("../controllers/ledgerTemplateController");
 const { scheduleNextStep } = require("../controllers/scheduleController");
 // Email job function for the queue
@@ -17,10 +15,9 @@ const { scheduleNextStep } = require("../controllers/scheduleController");
 
 require('dotenv').config();
 
-const emailJobFunction = async (job) => {
+const sendCommunicationEmail = async (jobData) => {
 
-    console.log(job.data);
-    const { unitId, proactiveId } = job.data;  // Access job data correctly
+    const { unitId, proactiveId } = jobData;  // Access job data correctly
     try {
 
 
@@ -186,42 +183,6 @@ const emailJobFunction = async (job) => {
     }
 };
 
-// Create the queue and define job processing
-const emailQueue = new Queue('sendEmailQueue', redisUrL);
-
-emailQueue.process(async (job) => {
-    try {
-        const result = await emailJobFunction(job);
-        return result;// Pass the job to the emailJobFunction
-    } catch (err) {
-        console.error(`Error processing job ${job.id}:`, err);
-        throw err; // This will trigger retries
-    }
-
-});
-
-// Add email job to the queue with retry and backoff logic
-const addEmailToQueue = async (emailData) => {
-    const job = await emailQueue.add(emailData, {
-        attempts: 5,
-        backoff: {
-            type: 'fixed',
-            delay: 5000  // Retry every 1 second, increasing exponentially
-        },
-        removeOnComplete: true,
-        removeOnFail: false
-    });
-
-    const result = await job.finished();
-
-    return result;
-};
 
 
-emailQueue.on('failed', async (job, err) => {
-    console.error(`Job ${job.id} failed:`, err);
-    console.error(job.data);
-});
-
-
-module.exports = { addEmailToQueue };
+module.exports = { sendCommunicationEmail };

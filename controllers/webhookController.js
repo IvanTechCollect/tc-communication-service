@@ -51,7 +51,7 @@ const handleCommunicationWebhooks = async (event, emailId, proactiveId, reason, 
         shouldRecordResponse = true;
         await ProactiveRoadmap.query().update({ status: 1, }).where('id', proactiveId);
         result = 1;
-    } else if (event === 'dropped' || event === 'failed') {
+    } else if (event === 'dropped' || event === 'failed' || event == 'deferred') {
         commStatus = 'Failed';
         failedReason = reason;
         result = -1;

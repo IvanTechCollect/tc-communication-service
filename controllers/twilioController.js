@@ -70,8 +70,10 @@ const makeCall = async (data) => {
         if (!foundTemplate) {
 
             console.log("❌ No Call template found.");
-            await scheduleNextStep(unitId);
-            console.log("Scheduled Next Step.");
+            if (foundTimelineStep.communication == 'Call') {
+                await scheduleNextStep(unitId);
+            }
+
             return false;
         }
 
@@ -161,16 +163,22 @@ const makeCall = async (data) => {
         });
 
         console.log("📞 Call Sent");
+        console.log(foundTimelineStep.communication);
 
-        await scheduleNextStep(unitId);
+        if (foundTimelineStep.communication == 'Call') {
+            await scheduleNextStep(unitId);
+        }
 
         return true;
     } catch (error) {
 
         await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1, activity_sent_date: new Date() });
 
-        await scheduleNextStep(unitId)
+        const foundTimelineStep = await ProactiveRoadmap.query().where('id', proactiveId).first();
 
+        if (foundTimelineStep.communication == 'Call') {
+            await scheduleNextStep(unitId);
+        }
 
 
         console.log(error?.response?.data);
@@ -191,7 +199,6 @@ const makeCall = async (data) => {
             created_at: new Date()
         });
 
-        console.log("Scheduled Next Step.");
 
 
         return false;

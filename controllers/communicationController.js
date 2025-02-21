@@ -1,18 +1,13 @@
-// communication controller.j
-const { addCallToQueue } = require('../jobs/callJob');
-const { addEmailToQueue } = require('../jobs/emailJob');
-const { addLetterToQueue } = require('../jobs/letterJob');
-const { addSmsToQueue } = require('../jobs/smsJob');
-const CommunicationHandling = require('../models/CommunicationHandling');
+
 const Community = require('../models/Community');
 const Company = require('../models/Company');
-const ProactiveRoadmap = require('../models/ProactiveRoadmap');
 const Unit = require('../models/Unit');
 const { getAzureFileSAS } = require('./azureController');
 
 require('dotenv').config();
 
 const Queue = require('bull');
+const { addCommunicationJob, getJobResult } = require('./queue');
 const redisUrl = process.env.REDIS_URL;
 
 
@@ -39,165 +34,33 @@ const waitForAllQueuesToBeEmpty = async () => {
 
 
 const runNextStep = async (req, res) => {
-
-    let retries = 0;
-    const { unitId, proactiveId } = req.body;
-
     try {
-        const { unitId, proactiveId } = req.body;
+        // Extract data from request
+        const data = req.body;
 
-        res.status(200).json({ success: true, message: 'Next step is queued for sending.' });
+        // Add job to the queue
+        const jobId = await addCommunicationJob(data.unitId, data.proactiveId, data.type);
 
-        await handleRunNextStep(unitId, proactiveId);
+        // Respond immediately to avoid request timeout
+        res.status(202).json({ message: "Job added", jobId });
 
+        console.log(`📨 Job ${jobId} added for unitId: ${data.unitId}, proactiveId: ${data.proactiveId}`);
+
+        // Wait for job to complete and fetch result
+        let jobResult = null;
+        while (!jobResult) {
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
+            jobResult = await getJobResult(jobId);
+        }
+
+        console.log(`✅ Final Job Result for ${jobId}:`, jobResult);
 
     } catch (error) {
-
-        console.log('Error Queueing Step');
-        console.log(error);
-        if (error.code === 'ECONNRESET' || error.code === 'PROTOCOL_CONNECTION_LOST') {
-            console.error('Database connection lost. Reconnecting...');
-
-            // Reset MySQL Connection
-            try {
-                await global.knex.destroy(); // Destroy old connection
-                global.knex = require('../config/dbConn')(); // Reconnect
-                console.log('Database connection reset successfully.');
-
-                if (retries < 3) {
-                    retries++;
-                    await handleRunNextStep(unitId, proactiveId);
-
-                } else {
-                    return;
-                }
-
-
-
-            } catch (reconnectError) {
-                console.error('Failed to reconnect to MySQL:', reconnectError);
-                return;
-            }
-        }
-
-
-
-
-
-    }
-
-
-
-}
-
-const handleRunNextStep = async (unitId, proactiveId) => {
-
-    try {
-        const foundComunication = await ProactiveRoadmap.query().where('id', proactiveId).first();
-
-        const type = foundComunication.communication;
-
-        if (type === 'Call') {
-
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            console.log('Queue Empty');
-            const result = await addCallToQueue({ unitId, proactiveId });
-            console.log('Call Queue Result:', result);
-
-        }
-
-        if (type === 'Email') {
-
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            console.log('Queue Empty');
-            const result = await addEmailToQueue({ unitId, proactiveId });
-            console.log('Email Queue Result:', result);
-
-        }
-
-        if (type === 'Letter') {
-
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            const result = await addLetterToQueue({ unitId, proactiveId });
-            console.log('Letter Queue Result:', result);
-
-        }
-
-        if (type === 'SMS') {
-
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            console.log('Queue Empty');
-            const result = await addSmsToQueue({ unitId, proactiveId });
-            console.log('SMS Queue Result:');
-            console.log(result);
-
-
-        }
-
-        if (type === 'Call & Letter') {
-
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            console.log('Queue Empty');
-            await addCallToQueue({ unitId, proactiveId });
-            await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-            console.log('Queue Empty');
-            await addLetterToQueue({ unitId, proactiveId });
-        }
-    } catch (error) {
-
-        throw error;
-    }
-
-
-}
-
-// Send Email (Only starts if all queues are empty)
-const sendCommunicationEmail = async (req, res) => {
-    try {
-        const { unitId, proactiveId } = req.body;
-        if (!unitId || !proactiveId) {
-            return res.status(400).json({ error: 'Missing required fields: unitId, proactiveId.' });
-        }
-
-        res.status(200).json({ success: true, message: 'Email is queued for sending.' });
-
-        await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-        const result = await addEmailToQueue({ unitId, proactiveId });
-        console.log('Queue Result:', result);
-    } catch (error) {
-        console.error('Error queuing email job:', error);
+        console.error("❌ Error in runNextStep:", error.message);
     }
 };
 
-// Send Letter (Only starts if all queues are empty)
-const sendCommunicationLetter = async (req, res) => {
-    const { unitId, proactiveId } = req.body;
-    res.sendStatus(200);
 
-    await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-    const result = await addLetterToQueue({ unitId, proactiveId });
-    console.log('Queue Result:', result);
-};
-
-// Send Call (Only starts if all queues are empty)
-const sendCommunicationCall = async (req, res) => {
-    res.sendStatus(200);
-    const data = req.body;
-
-    await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-    const result = await addCallToQueue(data);
-    console.log('Queue Result:', result);
-};
-
-// Send SMS (Only starts if all queues are empty)
-const sendCommunicationSMS = async (req, res) => {
-    res.sendStatus(200);
-    const data = req.body;
-
-    await waitForAllQueuesToBeEmpty(); // Ensure no jobs are running before starting
-    const result = await addSmsToQueue(data);
-    console.log('Queue Result:', result);
-};
 
 const getCommunicationLetterSAS = async (req, res) => {
 
@@ -255,4 +118,4 @@ const getCommunicationLetterSAS = async (req, res) => {
 
 
 
-module.exports = { sendCommunicationEmail, sendCommunicationLetter, sendCommunicationCall, sendCommunicationSMS, getCommunicationLetterSAS, runNextStep }    
+module.exports = { runNextStep, getCommunicationLetterSAS }    

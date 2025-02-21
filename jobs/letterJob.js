@@ -30,9 +30,9 @@ const { scheduleNextStep } = require('../controllers/scheduleController');
 
 const env = process.env.DB_ENV;
 
-const letterJobFunction = async (job) => {
+const sendLetter = async (jobData) => {
 
-    let { unitId, proactiveId } = job.data;
+    let { unitId, proactiveId } = jobData;
 
     try {
 
@@ -179,43 +179,6 @@ const letterJobFunction = async (job) => {
     }
 };
 
-const letterQueue = new Queue("sendLetterQueue", redisUrl);
-
-letterQueue.process(async (job) => {
-    try {
-        const result = await letterJobFunction(job);
-        return result;// Pass the job to the emailJobFunction
-    } catch (err) {
-        console.error(`Error processing job ${job.id}:`, err);
-        throw err; // This will trigger retries
-    }
-});
-
-const addLetterToQueue = async (letterData) => {
-    const job = await letterQueue.add(letterData, {
-        attempts: 5,
-        backoff: {
-            type: 'fixed',
-            delay: 5000  // Retry every 1 second, increasing exponentially
-        },
-        removeOnComplete: true,
-        removeOnFail: false
-    });
-
-    const result = await job.finished();
-
-    return result; // Return the result (true or false) after job completion
-};
 
 
-letterQueue.on('failed', async (job, err) => {
-    console.error(`Job ${job.id} failed:`, err);
-    console.error(job.data);
-
-
-});
-
-
-
-
-module.exports = { addLetterToQueue, letterQueue };
+module.exports = { sendLetter };

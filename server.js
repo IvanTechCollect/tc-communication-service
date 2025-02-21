@@ -21,7 +21,6 @@ app.use(express.urlencoded({ extended: true })); // For URL-encoded bodies
 
 connectDb();
 connectToMongoDb();
-startRedis();
 
 // Endpoint to add a job to the queue
 app.get('/', async (req, res) => {

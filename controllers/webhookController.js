@@ -2,22 +2,20 @@ const CommunicationHandling = require('../models/CommunicationHandling');
 const ProactiveRoadmap = require('../models/ProactiveRoadmap');
 const VoiceCallback = require('../models/VoiceCallback');
 const { sendEmail } = require('./emailController');
+const { addWebhookJob } = require('./queue');
 const { scheduleNextStep } = require('./scheduleController');
 const { forwardCallToClient } = require('./twilioController');
 
+
 const handleEmailWebhook = async (req, res) => {
 
+    res.sendStatus(200);
 
-    const { emailId, proactiveId, unitId, event, response, timestamp, reason, env, emailType } = req.body[0];
+    const data = req.body[0];
 
-    if (emailType === 'Follow Up') {
+    await addWebhookJob('Email', data);
 
-        await handleCommunicationWebhooks(event, emailId, proactiveId, reason, unitId, timestamp, res);
-    } else if (emailType === 'System') {
 
-        await handleSystemWebhook(event, res);
-
-    }
 
 }
 
@@ -92,24 +90,13 @@ const handleCallWebhook = async (req, res) => {
 
     res.sendStatus(200);
 
-    const { CallStatus, AnsweredBy, Digits } = req.body;
-    const { proactiveId } = req.query;
+    const data = req.body;
 
-    if (CallStatus == 'completed') {
+    await addWebhookJob('Call', data);
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1, activity_sent_date: new Date(), });
+    return;
 
-        await VoiceCallback.query().insert({
-            voiceId: req.body.CallSid,
-            mobile: req.body.Called,
-            status: CallStatus,
-            type: 'call',
-            answered_by: AnsweredBy,
-            CallDuration: req.body.CallDuration,
-            created_at: new Date(),
-            response: JSON.stringify(req.body)
-        })
-    }
+
 
 }
 
@@ -128,28 +115,12 @@ const callForwardWebhook = async (req, res) => {
 
 const handleSmsWebhook = async (req, res) => {
 
-    const { MessageStatus, MessageSid } = req.body;
-    const { proactiveId } = req.query;
+    res.sendStatus(200);
+    const data = req.body;
 
-    if (MessageStatus == 'delivered') {
+    await addWebhookJob('SMS', data);
 
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 1 });
-
-
-    } else if (MessageStatus === 'sent') {
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: 2 });
-
-
-    } else {
-
-        await ProactiveRoadmap.query().where('id', proactiveId).update({ status: -1 });
-
-    }
-    console.log('SMS Send Status', MessageStatus);
-
-
-    res.sendStatus(200); // Respond to Twilio that we received the webhook
-
+    return;
 }
 
 const handleSystemWebhook = async (event, res) => {

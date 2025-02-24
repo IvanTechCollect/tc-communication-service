@@ -5,7 +5,23 @@ const IORedis = require('ioredis');
 
 const connection = new IORedis(process.env.REDIS_URL);
 const communicationQueue = new Queue('communicationQueue', { connection });
+const webhookQueue = new Queue('webhookQueue', { connection });
 
+
+
+const addWebhookJob = async (type, data) => {
+
+    try {
+        const job = await webhookQueue.add('handleWebhook', { type, data }, {
+            attempts: 3, // Retries the job 3 times if it fails
+            backoff: { type: 'fixed', delay: 5000 } // Wait 5 seconds before retrying
+        });
+
+        console.log(`✅ Webhook job added: ${job.id}`);
+    } catch (error) {
+        console.error("❌ Error adding webhook job:", error.message);
+    }
+}
 async function addCommunicationJob(unitId, proactiveId, type) {
     const job = await communicationQueue.add('sendCommunication', { unitId, proactiveId, type }, {
         attempts: 3, // Retry 3 times if failed
@@ -37,4 +53,4 @@ async function getJobResult(jobId) {
     return result;
 }
 
-module.exports = { addCommunicationJob, getJobResult };
+module.exports = { addCommunicationJob, getJobResult, addWebhookJob };

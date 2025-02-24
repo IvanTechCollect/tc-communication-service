@@ -90,7 +90,11 @@ const handleCallWebhook = async (req, res) => {
 
     res.sendStatus(200);
 
-    const data = req.body;
+    let data = req.body;
+    const { proactiveId } = req.query;
+
+    data.proactiveId = proactiveId;
+
 
     await addWebhookJob('Call', data);
 
@@ -116,7 +120,10 @@ const callForwardWebhook = async (req, res) => {
 const handleSmsWebhook = async (req, res) => {
 
     res.sendStatus(200);
-    const data = req.body;
+    let data = req.body;
+    const { proactiveId } = req.query;
+
+    data.proactiveId = proactiveId;
 
     await addWebhookJob('SMS', data);
 
